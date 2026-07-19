@@ -465,8 +465,12 @@ function confirmSetup() {
 }
 
 function showHomeScreen(data) {
-  var h1 = document.querySelector('#home-header h1')
-  if (h1) h1.textContent = data ? data.playerName + ' の Chronicle' : 'Chronicle'
+  if (data) {
+    document.getElementById('pc-user-name').textContent = data.playerName
+    document.getElementById('pc-user-id').textContent = 'ID: ' + data.playerId
+    var avatar = document.getElementById('pc-user-avatar')
+    if (avatar) avatar.textContent = data.playerName.charAt(0)
+  }
   document.getElementById('home-screen').classList.remove('hidden')
 }
 
@@ -534,4 +538,68 @@ function showHomeScreen(data) {
       }
     }, { passive: true })
   }
+})()
+
+// ============================================================
+// PCデスクトップ
+// ============================================================
+;(function () {
+  // PCを開く
+  var monitor = document.getElementById('pc-monitor')
+  var pcClickArea = document.getElementById('pc-click-area')
+  var pcOverlay = document.getElementById('pc-overlay')
+
+  function openPC() {
+    if (pcOverlay) pcOverlay.classList.remove('hidden')
+  }
+
+  function closePC() {
+    if (pcOverlay) pcOverlay.classList.add('hidden')
+  }
+
+  if (monitor) monitor.addEventListener('click', openPC)
+  if (pcClickArea) pcClickArea.addEventListener('click', function (e) {
+    if (e.target === pcClickArea) openPC()
+  })
+
+  // 閉じる
+  var closeBtn = document.getElementById('pc-close-btn')
+  if (closeBtn) closeBtn.addEventListener('click', closePC)
+
+  // オーバーレイ背景クリックで閉じる
+  if (pcOverlay) pcOverlay.addEventListener('click', function (e) {
+    if (e.target === pcOverlay) closePC()
+  })
+
+  // ユーザー
+  var userArea = document.getElementById('pc-user-area')
+  if (userArea) {
+    userArea.addEventListener('click', function () {
+      alert('プロフィール画面は準備中です')
+    })
+  }
+
+  // アプリケーション
+  var APP_ACTIONS = {
+    unishare: function () { window.open('https://milli-unishare.onrender.com') },
+    sns: function () { alert('SNS機能は準備中です') },
+    store: function () { alert('ストア機能は準備中です') },
+    illust: function () { alert('イラスト機能は準備中です') },
+    settings: function () {
+      closePC()
+      openPopup('popup-setting')
+    },
+    milligames: function () { window.open('https://milli-games.onrender.com') },
+    gameA: function () { alert('「ミリプロアドベンチャー」は準備中です') },
+    gameB: function () { alert('「タレントクイズ」は準備中です') },
+    gameC: function () { alert('「リズムチャレンジ」は準備中です') },
+  }
+
+  document.querySelectorAll('.pc-app').forEach(function (app) {
+    app.addEventListener('click', function () {
+      var key = app.dataset.app
+      var action = APP_ACTIONS[key]
+      if (action) action()
+    })
+  })
 })()

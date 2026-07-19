@@ -221,26 +221,470 @@ body{
 .btn-primary { background: #007aff; color: #fff; border: none; padding: 10px 20px; font-size: 14px; border-radius: 8px; cursor: pointer; font-weight: bold; }
 .btn-secondary { background: #f2f2f7; color: #555; border: none; padding: 10px 20px; font-size: 14px; border-radius: 8px; cursor: pointer; }
 
+/* ============================================================
+   ROOM_TEMP: プレイヤーの部屋
+   壁・床は仮CSSです。後で背景画像に差し替えてください。
+   ============================================================ */
 #home-screen {
-  min-height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 10;
+  background: #2c1810;
+}
+
+.room-container {
+  display: flex;
+  height: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+.room-section {
+  flex: 0 0 100vw;
+  height: 100%;
+  scroll-snap-align: start;
+  position: relative;
+  overflow: hidden;
+}
+
+/* ROOM_TEMP: 壁の仮色 */
+.room-wall {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, #e8dcc8 0%, #ddd0b8 65%, transparent 65%);
+  z-index: 0;
+}
+
+/* ROOM_TEMP: 床の仮色 */
+.room-floor {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 35%;
+  background: linear-gradient(180deg, #c4a882 0%, #b8956e 100%);
+  z-index: 0;
+}
+
+.room-floor::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: #a07850;
+}
+
+.room-label {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: rgba(255,255,255,0.5);
+  font-size: 12px;
+  letter-spacing: 0.15em;
+  z-index: 5;
+  white-space: nowrap;
+}
+
+.furniture-area {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 10%;
+}
+
+/* ========== コレクション棚 ========== */
+.shelf-frame {
+  position: relative;
+  width: min(55%, 320px);
+  height: min(52%, 360px);
+  background: #8B6914;
+  border-radius: 4px 4px 0 0;
+  border: 3px solid #6b4f0e;
+  border-bottom: none;
+  display: flex;
+  flex-direction: column;
+  padding: 8px;
+  gap: 6px;
+  box-sizing: border-box;
+}
+
+.shelf-row {
+  flex: 1;
+  display: flex;
+  gap: 6px;
+}
+
+.shelf-slot {
+  flex: 1;
+  border: 2px dashed rgba(0,0,0,0.15);
+  border-radius: 4px;
+  background: rgba(0,0,0,0.05);
+}
+
+.shelf-board {
+  height: 6px;
+  background: #6b4f0e;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+/* ========== パソコンデスク ========== */
+.desk-top {
+  position: absolute;
+  bottom: min(12%, 70px);
+  width: min(70%, 420px);
+  height: 18px;
+  background: linear-gradient(180deg, #a0522d, #8B4513);
+  border-radius: 4px;
+  z-index: 2;
+}
+
+.desk-leg {
+  position: absolute;
+  bottom: 0;
+  width: 12px;
+  height: min(12%, 70px);
+  background: linear-gradient(180deg, #8B4513, #6b3410);
+  border-radius: 2px;
+}
+
+.desk-leg.left { left: min(15%, 80px); }
+.desk-leg.right { right: min(15%, 80px); }
+
+.monitor {
+  position: absolute;
+  bottom: min(calc(12% + 20px), 90px);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 3;
+  transition: transform 0.15s;
+}
+
+.monitor:active {
+  transform: scale(0.96);
+}
+
+.monitor-screen {
+  width: min(48vw, 300px);
+  height: min(30vh, 200px);
   background: #1a1a2e;
+  border-radius: 8px 8px 4px 4px;
+  border: 4px solid #333;
+  border-bottom: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
 }
 
-#home-header {
-  background: rgba(0,0,0,0.4);
-  padding: 16px 24px;
+.monitor-screen::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(175,148,237,0.08), transparent);
+  pointer-events: none;
 }
 
-#home-header h1 {
-  margin: 0;
+.monitor-screen span {
+  color: rgba(175,148,237,0.6);
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  animation: monitorGlow 2s ease-in-out infinite;
+}
+
+@keyframes monitorGlow {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.9; }
+}
+
+.monitor-base {
+  width: 60%;
+  height: 8px;
+  background: #333;
+  border-radius: 0 0 4px 4px;
+}
+
+.keyboard {
+  position: absolute;
+  bottom: min(10%, 58px);
+  width: min(40%, 240px);
+  height: 8px;
+  background: #444;
+  border-radius: 3px;
+  z-index: 2;
+}
+
+.mouse {
+  position: absolute;
+  bottom: min(10%, 58px);
+  right: min(18%, 100px);
+  width: 14px;
+  height: 20px;
+  background: #555;
+  border-radius: 7px 7px 4px 4px;
+  z-index: 2;
+}
+
+/* ========== 本棚（図鑑） ========== */
+.bookshelf-frame {
+  position: relative;
+  width: min(50%, 300px);
+  height: min(55%, 380px);
+  background: #6b4f0e;
+  border-radius: 4px 4px 0 0;
+  border: 3px solid #5a4210;
+  border-bottom: none;
+  display: flex;
+  flex-direction: column;
+  padding: 8px;
+  gap: 4px;
+  box-sizing: border-box;
+}
+
+.bookshelf-row {
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  padding: 0 2px;
+}
+
+.book {
+  width: 14px;
+  height: var(--book-h, 75%);
+  background: var(--book-c, #aaa);
+  border-radius: 2px 2px 0 0;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.book::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 3px;
+  right: 3px;
+  height: 1px;
+  background: rgba(255,255,255,0.2);
+}
+
+/* ========== PC デスクトップ ========== */
+#pc-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.75);
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.pc-desktop {
+  width: 100%;
+  max-width: 560px;
+  max-height: 85vh;
+  background: linear-gradient(180deg, #0f0f23, #1a1a3e);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  display: flex;
+  flex-direction: column;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.pc-desktop-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: rgba(0,0,0,0.3);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  flex-shrink: 0;
+}
+
+.pc-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 8px;
+  transition: background 0.15s;
+}
+
+.pc-user:hover {
+  background: rgba(255,255,255,0.05);
+}
+
+.pc-user-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #af94ed, #8b7fd4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: #fff;
-  font-size: 28px;
+  font-size: 16px;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.pc-user-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.pc-user-name {
+  color: #fff;
+  font-size: 14px;
   font-weight: bold;
 }
 
-#home-main {
-  padding: 24px;
-  color: #fff;
+.pc-user-id {
+  color: #888;
+  font-size: 10px;
+}
+
+.pc-close-btn {
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.08);
+  color: #ccc;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+
+.pc-close-btn:hover {
+  background: rgba(255,80,80,0.3);
+  color: #ff6b6b;
+}
+
+.pc-desktop-body {
+  padding: 20px 16px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.pc-apps-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.pc-app {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  padding: 10px 6px;
+  border-radius: 12px;
+  transition: background 0.15s;
+  user-select: none;
+}
+
+.pc-app:hover {
+  background: rgba(255,255,255,0.06);
+}
+
+.pc-app:active {
+  transform: scale(0.95);
+}
+
+.pc-app-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255,255,255,0.08);
+}
+
+.pc-app-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.pc-app-emoji {
+  font-size: 28px;
+  background: rgba(175,148,237,0.1);
+}
+
+.pc-app-label {
+  color: #ccc;
+  font-size: 11px;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.pc-divider {
+  text-align: center;
+  color: #555;
+  font-size: 12px;
+  letter-spacing: 0.2em;
+  margin: 8px 0 16px;
+}
+
+/* ========== PC表示のレスポンシブ ========== */
+@media (min-width: 1024px) {
+  .room-section {
+    flex: 0 0 640px;
+  }
+  .room-container {
+    justify-content: center;
+  }
+  .monitor-screen {
+    width: 360px;
+    height: 240px;
+  }
+}
+
+@media (min-width: 1920px) {
+  .room-container {
+    overflow-x: hidden;
+  }
+}
+
+/* モバイル時のタッチターゲット拡大 */
+@media (max-width: 767px) {
+  .pc-app {
+    padding: 12px 8px;
+  }
+  .pc-app-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 16px;
+  }
 }
 
 @keyframes fadeIn {

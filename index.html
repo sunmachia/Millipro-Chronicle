@@ -87,11 +87,160 @@
 </div>
 
 <div id="home-screen" class="hidden">
-  <header id="home-header">
-    <h1>Chronicle</h1>
-  </header>
-  <main id="home-main">
-  </main>
+  <div class="room-container" id="room-container">
+
+    <!-- Left: Collection Shelf -->
+    <div class="room-section room-shelf">
+      <div class="room-label">コレクション棚</div>
+      <div class="room-wall"><!-- TEMP: 仮壁色 後で背景画像に差し替え --></div>
+      <div class="room-floor"><!-- TEMP: 仮床色 後で背景画像に差し替え --></div>
+      <div class="furniture-area">
+        <div class="shelf-frame">
+          <div class="shelf-board"></div>
+          <div class="shelf-board"></div>
+          <div class="shelf-board"></div>
+          <div class="shelf-row">
+            <div class="shelf-slot empty"></div>
+            <div class="shelf-slot empty"></div>
+            <div class="shelf-slot empty"></div>
+          </div>
+          <div class="shelf-row">
+            <div class="shelf-slot empty"></div>
+            <div class="shelf-slot empty"></div>
+            <div class="shelf-slot empty"></div>
+          </div>
+          <div class="shelf-row">
+            <div class="shelf-slot empty"></div>
+            <div class="shelf-slot empty"></div>
+            <div class="shelf-slot empty"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Center: PC Desk -->
+    <div class="room-section room-desk">
+      <div class="room-label">パソコン</div>
+      <div class="room-wall"></div>
+      <div class="room-floor"></div>
+      <div class="furniture-area" id="pc-click-area">
+        <div class="desk-top"></div>
+        <div class="desk-leg left"></div>
+        <div class="desk-leg right"></div>
+        <div class="monitor" id="pc-monitor">
+          <div class="monitor-screen">
+            <span>クリックして開く</span>
+          </div>
+          <div class="monitor-base"></div>
+        </div>
+        <div class="keyboard"></div>
+        <div class="mouse"></div>
+      </div>
+    </div>
+
+    <!-- Right: Bookshelf -->
+    <div class="room-section room-bookshelf">
+      <div class="room-label">図鑑</div>
+      <div class="room-wall"></div>
+      <div class="room-floor"></div>
+      <div class="furniture-area">
+        <div class="bookshelf-frame">
+          <div class="shelf-board"></div>
+          <div class="shelf-board"></div>
+          <div class="shelf-board"></div>
+          <div class="shelf-board"></div>
+          <div class="bookshelf-row">
+            <div class="book" style="--book-c:#e74c3c;--book-h:75%"></div>
+            <div class="book" style="--book-c:#3498db;--book-h:85%"></div>
+            <div class="book" style="--book-c:#2ecc71;--book-h:65%"></div>
+            <div class="book" style="--book-c:#f39c12;--book-h:80%"></div>
+            <div class="book" style="--book-c:#9b59b6;--book-h:70%"></div>
+          </div>
+          <div class="bookshelf-row">
+            <div class="book" style="--book-c:#1abc9c;--book-h:80%"></div>
+            <div class="book" style="--book-c:#e67e22;--book-h:70%"></div>
+            <div class="book" style="--book-c:#c0392b;--book-h:85%"></div>
+            <div class="book" style="--book-c:#2980b9;--book-h:65%"></div>
+            <div class="book" style="--book-c:#8e44ad;--book-h:75%"></div>
+          </div>
+          <div class="bookshelf-row">
+            <div class="book" style="--book-c:#16a085;--book-h:70%"></div>
+            <div class="book" style="--book-c:#d35400;--book-h:85%"></div>
+            <div class="book" style="--book-c:#27ae60;--book-h:75%"></div>
+            <div class="book" style="--book-c:#f1c40f;--book-h:65%"></div>
+            <div class="book" style="--book-c:#7f8c8d;--book-h:80%"></div>
+          </div>
+          <div class="bookshelf-row">
+            <div class="book" style="--book-c:#e84393;--book-h:85%"></div>
+            <div class="book" style="--book-c:#00b894;--book-h:70%"></div>
+            <div class="book" style="--book-c:#6c5ce7;--book-h:80%"></div>
+            <div class="book" style="--book-c:#fd79a8;--book-h:65%"></div>
+            <div class="book" style="--book-c:#636e72;--book-h:75%"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- PC Desktop Overlay -->
+<div id="pc-overlay" class="hidden">
+  <div class="pc-desktop">
+    <div class="pc-desktop-header">
+      <div class="pc-user" id="pc-user-area">
+        <div class="pc-user-avatar" id="pc-user-avatar"></div>
+        <div class="pc-user-info">
+          <span class="pc-user-name" id="pc-user-name"></span>
+          <span class="pc-user-id" id="pc-user-id"></span>
+        </div>
+      </div>
+      <button class="pc-close-btn" id="pc-close-btn">✕</button>
+    </div>
+    <div class="pc-desktop-body">
+      <div class="pc-apps-grid">
+        <div class="pc-app" data-app="unishare">
+          <div class="pc-app-icon"><img src="images/pc/Milli Unishare.png" alt="Milli Unishare"></div>
+          <span class="pc-app-label">Milli Unishare</span>
+        </div>
+        <div class="pc-app" data-app="sns">
+          <div class="pc-app-icon pc-app-emoji">📶</div>
+          <span class="pc-app-label">SNS</span>
+        </div>
+        <div class="pc-app" data-app="store">
+          <div class="pc-app-icon pc-app-emoji">🛒</div>
+          <span class="pc-app-label">ストア</span>
+        </div>
+        <div class="pc-app" data-app="illust">
+          <div class="pc-app-icon pc-app-emoji">🖊️</div>
+          <span class="pc-app-label">イラスト</span>
+        </div>
+        <div class="pc-app" data-app="settings">
+          <div class="pc-app-icon pc-app-emoji">⚙️</div>
+          <span class="pc-app-label">設定</span>
+        </div>
+      </div>
+      <div class="pc-divider">━━━ ゲーム ━━━</div>
+      <div class="pc-apps-grid">
+        <div class="pc-app" data-app="milligames">
+          <div class="pc-app-icon"><img src="images/pc/Milli Games.png" alt="Milli Games"></div>
+          <span class="pc-app-label">Milli Games</span>
+        </div>
+        <div class="pc-app" data-app="gameA">
+          <div class="pc-app-icon pc-app-emoji">🎮</div>
+          <span class="pc-app-label">ミリプロアドベンチャー</span>
+        </div>
+        <div class="pc-app" data-app="gameB">
+          <div class="pc-app-icon pc-app-emoji">🎯</div>
+          <span class="pc-app-label">タレントクイズ</span>
+        </div>
+        <div class="pc-app" data-app="gameC">
+          <div class="pc-app-icon pc-app-emoji">🎵</div>
+          <span class="pc-app-label">リズムチャレンジ</span>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <div id="setup-screen" class="hidden">
