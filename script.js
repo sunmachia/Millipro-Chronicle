@@ -476,6 +476,12 @@ function showHomeScreen(data) {
     if (avatar) avatar.textContent = data.playerName.charAt(0)
   }
   document.getElementById('home-screen').classList.remove('hidden')
+
+  // スマホは最初に真ん中（スマホ）の位置にスクロール
+  if (window.innerWidth < 768) {
+    var deskSection = document.querySelector('.room-desk')
+    if (deskSection) deskSection.scrollIntoView({ behavior: 'auto', inline: 'start' })
+  }
 }
 
 // 設定画面のイベントリスナー
