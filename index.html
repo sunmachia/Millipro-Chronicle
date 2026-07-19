@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Millipro Chronicle</title>
+  <link rel="icon" href="images/icon/favicon.ico">
+  <link rel="apple-touch-icon" href="images/icon/192.png">
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
+</head>
+<body>
+<div id="pwa-overlay" class="pwa-overlay">
+  <div id="pwa-banner" class="pwa-banner">
+    <div class="pwa-banner-content">
+      <p id="pwa-banner-text"></p>
+      <div class="pwa-banner-buttons">
+        <button id="pwa-close-btn" class="btn-secondary">閉じる</button>
+        <button id="pwa-install-btn" class="btn-secondary" style="display:none">アプリをインストール</button>
+        <button id="pwa-action-btn" class="btn-primary"></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="title-screen">
+  <div class="title-button" id="btn-start">
+    <img src="images/button/title/tap-to-start.png" alt="start">
+    <span class="btn-caption" id="caption-start">クリックして開始</span>
+  </div>
+  <div id="top-buttons">
+    <div class="title-button" id="btn-info">
+      <img src="images/button/title/information.png" alt="information">
+      <span class="btn-caption">お知らせ</span>
+    </div>
+    <div class="title-button" id="btn-setting">
+      <img src="images/button/title/setting.png" alt="setting">
+      <span class="btn-caption">設定</span>
+    </div>
+  </div>
+</div>
+
+<div class="popup-overlay hidden" id="popup-info">
+  <div class="popup-content">
+    <div class="popup-header">お知らせ</div>
+    <div class="popup-body">
+      <div class="popup-card">
+        <div class="popup-card-title">リリース記念イベント実施中！</div>
+        <div class="popup-card-desc">リリースを記念し、『Mile Stone』バージョンを公開中です！ミリプロの世界をお楽しみください！！</div>
+      </div>
+      <div class="popup-card">
+        <div class="popup-card-title">📢 お知らせ</div>
+        <div class="popup-card-desc">新しい機能を準備中です。アップデートをお待ちください。</div>
+      </div>
+    </div>
+    <div class="popup-footer">
+      <button class="popup-close-btn">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<div class="popup-overlay hidden" id="popup-setting">
+  <div class="popup-content">
+    <div class="popup-header">設定</div>
+    <div class="popup-body">
+      <div class="setting-item">
+        <span>音量</span>
+        <div class="setting-bar"><div class="setting-bar-fill" style="width:70%"></div></div>
+      </div>
+      <div class="setting-item">
+        <span>効果音</span>
+        <div class="setting-toggle on"></div>
+      </div>
+      <div class="setting-item">
+        <span>BGM</span>
+        <div class="setting-toggle on"></div>
+      </div>
+      <div class="setting-placeholder">設定は準備中です</div>
+    </div>
+    <div class="popup-footer">
+      <button class="popup-close-btn">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<div id="home-screen" class="hidden">
+  <header id="home-header">
+    <h1>Chronicle</h1>
+  </header>
+  <main id="home-main">
+  </main>
+</div>
+
+<div id="setup-screen" class="hidden">
+  <div class="setup-container">
+    <div class="setup-header">
+      <div class="setup-progress-bar"><div class="setup-progress-fill" style="width:20%"></div></div>
+      <span class="setup-step">1 / 5</span>
+    </div>
+    <div class="setup-pages">
+
+      <!-- Page 1: Player Name -->
+      <div class="setup-page" data-page="0">
+        <div class="setup-page-inner">
+          <h2 class="setup-title">✦ プレイヤー名 ✦</h2>
+          <div class="setup-field">
+            <input type="text" id="input-name" class="setup-input" maxlength="10" placeholder="プレイヤー名を入力" autocomplete="off">
+            <p class="setup-field-hint">10文字以内で入力してください</p>
+            <p class="setup-field-error hidden" id="name-error">名前を入力してください</p>
+          </div>
+        </div>
+        <div class="setup-footer">
+          <button class="setup-btn setup-btn-next" id="name-next-btn">次へ</button>
+        </div>
+      </div>
+
+      <!-- Page 2: Ultimate Oshi -->
+      <div class="setup-page hidden" data-page="1">
+        <div class="setup-page-inner">
+          <h2 class="setup-title">✦ 最推し ✦</h2>
+          <p class="setup-desc">あなたの最推しを1人選んでください</p>
+          <div class="setup-hscroll" id="ultimate-oshi-list"></div>
+        </div>
+        <div class="setup-footer">
+          <button class="setup-btn setup-btn-back">戻る</button>
+          <button class="setup-btn setup-btn-next disabled" id="ultimate-next-btn">次へ</button>
+        </div>
+      </div>
+
+      <!-- Page 3: Favorites -->
+      <div class="setup-page hidden" data-page="2">
+        <div class="setup-page-inner">
+          <h2 class="setup-title">✦ 推し ✦</h2>
+          <p class="setup-desc">推しタレントを複数選択できます</p>
+          <div class="setup-grid" id="favorites-list"></div>
+          <div class="setup-group-bar">
+            <button class="group-btn" data-group="nova">NOVA</button>
+            <button class="group-btn" data-group="uni">UNI</button>
+            <button class="group-btn" data-group="all">ミリプロ</button>
+          </div>
+          <p class="setup-count" id="favorites-count">0 / 10人 選択中</p>
+        </div>
+        <div class="setup-footer">
+          <button class="setup-btn setup-btn-back">戻る</button>
+          <button class="setup-btn setup-btn-next">次へ</button>
+        </div>
+      </div>
+
+      <!-- Page 4: Profile Comment -->
+      <div class="setup-page hidden" data-page="3">
+        <div class="setup-page-inner">
+          <h2 class="setup-title">✦ プロフィールコメント ✦</h2>
+          <p class="setup-desc">任意で一言コメントを入力できます（後から変更可）</p>
+          <div class="setup-field">
+            <textarea id="input-comment" class="setup-textarea" maxlength="100" placeholder="コメントを入力（任意）" rows="3"></textarea>
+            <p class="setup-field-hint">任意・100文字以内</p>
+          </div>
+        </div>
+        <div class="setup-footer">
+          <button class="setup-btn setup-btn-back">戻る</button>
+          <button class="setup-btn setup-btn-next">スキップ</button>
+        </div>
+      </div>
+
+      <!-- Page 5: Confirmation -->
+      <div class="setup-page hidden" data-page="4">
+        <div class="setup-page-inner">
+          <h2 class="setup-title">✦ 確認 ✦</h2>
+          <div class="setup-confirm">
+            <div class="confirm-row">
+              <span class="confirm-label">プレイヤー名</span>
+              <span class="confirm-value" id="confirm-name"></span>
+            </div>
+            <div class="confirm-row">
+              <span class="confirm-label">最推し</span>
+              <span class="confirm-value" id="confirm-ultimate"></span>
+            </div>
+            <div class="confirm-row">
+              <span class="confirm-label">推し</span>
+              <span class="confirm-value" id="confirm-favorites"></span>
+            </div>
+            <div class="confirm-row">
+              <span class="confirm-label">コメント</span>
+              <span class="confirm-value" id="confirm-comment"></span>
+            </div>
+          </div>
+          <p class="setup-confirm-note">後から設定画面で変更できます</p>
+        </div>
+        <div class="setup-footer">
+          <button class="setup-btn setup-btn-back">戻る</button>
+          <button class="setup-btn setup-btn-confirm">確定する</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div id="transition-overlay" class="hidden">
+  <div id="loading" class="hidden">
+    <div class="spinner"></div>
+    <span>読み込み中...</span>
+  </div>
+</div>
+
+<audio id="title-bgm" src="musics/title/mile stone/Mile Stone_inst.mp3" loop preload="auto"></audio>
+<audio id="tap-se" src="musics/sound effects/tap to start.mp3" preload="auto"></audio>
+<script src="pwa.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
