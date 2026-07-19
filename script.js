@@ -210,17 +210,25 @@ function renderUltimateOshiCards() {
     var card = document.createElement('div')
     card.className = 'talent-card'
     card.dataset.id = id
-    var imgDiv = document.createElement('div')
-    imgDiv.className = 'talent-card-img'
-    var img = document.createElement('img')
-    img.src = talentLogoPath(id)
-    img.alt = t.name
-    img.loading = 'lazy'
-    imgDiv.appendChild(img)
+    var portraitDiv = document.createElement('div')
+    portraitDiv.className = 'talent-card-portrait'
+    var portraitImg = document.createElement('img')
+    portraitImg.src = 'images/talents/' + id + '.webp'
+    portraitImg.alt = t.name
+    portraitImg.loading = 'lazy'
+    portraitDiv.appendChild(portraitImg)
+    var logoDiv = document.createElement('div')
+    logoDiv.className = 'talent-card-logo'
+    var logoImg = document.createElement('img')
+    logoImg.src = talentLogoPath(id)
+    logoImg.alt = t.name
+    logoImg.loading = 'lazy'
+    logoDiv.appendChild(logoImg)
     var nameSpan = document.createElement('span')
     nameSpan.className = 'talent-card-name'
     nameSpan.textContent = t.name
-    card.appendChild(imgDiv)
+    card.appendChild(portraitDiv)
+    card.appendChild(logoDiv)
     card.appendChild(nameSpan)
     card.addEventListener('click', function () { selectUltimate(id) })
     container.appendChild(card)
@@ -235,17 +243,25 @@ function renderFavoriteCards() {
     var card = document.createElement('div')
     card.className = 'talent-card'
     card.dataset.id = id
-    var imgDiv = document.createElement('div')
-    imgDiv.className = 'talent-card-img'
-    var img = document.createElement('img')
-    img.src = talentLogoPath(id)
-    img.alt = t.name
-    img.loading = 'lazy'
-    imgDiv.appendChild(img)
+    var portraitDiv = document.createElement('div')
+    portraitDiv.className = 'talent-card-portrait'
+    var portraitImg = document.createElement('img')
+    portraitImg.src = 'images/talents/' + id + '.webp'
+    portraitImg.alt = t.name
+    portraitImg.loading = 'lazy'
+    portraitDiv.appendChild(portraitImg)
+    var logoDiv = document.createElement('div')
+    logoDiv.className = 'talent-card-logo'
+    var logoImg = document.createElement('img')
+    logoImg.src = talentLogoPath(id)
+    logoImg.alt = t.name
+    logoImg.loading = 'lazy'
+    logoDiv.appendChild(logoImg)
     var nameSpan = document.createElement('span')
     nameSpan.className = 'talent-card-name'
     nameSpan.textContent = t.name
-    card.appendChild(imgDiv)
+    card.appendChild(portraitDiv)
+    card.appendChild(logoDiv)
     card.appendChild(nameSpan)
     card.addEventListener('click', function () { toggleFavorite(id) })
     container.appendChild(card)

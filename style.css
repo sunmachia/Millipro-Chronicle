@@ -461,9 +461,9 @@ body{
   left: 0;
   width: 100%;
   height: 100%;
-  background: #1a1a2e;
+  background: #f0e8fa;
   z-index: 100;
-  color: #fff;
+  color: #444;
 }
 
 .setup-container {
@@ -477,14 +477,14 @@ body{
   align-items: center;
   gap: 12px;
   padding: 16px 20px;
-  background: rgba(0,0,0,0.3);
+  background: rgba(107,70,193,0.06);
   flex-shrink: 0;
 }
 
 .setup-progress-bar {
   flex: 1;
   height: 4px;
-  background: rgba(255,255,255,0.12);
+  background: rgba(107,70,193,0.12);
   border-radius: 2px;
   overflow: hidden;
 }
@@ -498,7 +498,7 @@ body{
 
 .setup-step {
   font-size: 13px;
-  color: #af94ed;
+  color: #8b5cf6;
   font-weight: bold;
   flex-shrink: 0;
 }
@@ -530,7 +530,7 @@ body{
 
 .setup-desc {
   font-size: 13px;
-  color: #999;
+  color: #888;
   text-align: center;
   margin: 0 0 16px;
 }
@@ -542,10 +542,10 @@ body{
 .setup-input {
   width: 100%;
   padding: 14px 16px;
-  border: 2px solid rgba(175,148,237,0.25);
+  border: 2px solid #d4c5f0;
   border-radius: 12px;
-  background: rgba(255,255,255,0.06);
-  color: #fff;
+  background: #fff;
+  color: #333;
   font-size: 16px;
   outline: none;
   transition: border-color 0.2s;
@@ -553,20 +553,20 @@ body{
 }
 
 .setup-input:focus {
-  border-color: #af94ed;
+  border-color: #8b5cf6;
 }
 
 .setup-input::placeholder {
-  color: #555;
+  color: #bbb;
 }
 
 .setup-textarea {
   width: 100%;
   padding: 14px 16px;
-  border: 2px solid rgba(175,148,237,0.25);
+  border: 2px solid #d4c5f0;
   border-radius: 12px;
-  background: rgba(255,255,255,0.06);
-  color: #fff;
+  background: #fff;
+  color: #333;
   font-size: 15px;
   outline: none;
   transition: border-color 0.2s;
@@ -575,22 +575,22 @@ body{
 }
 
 .setup-textarea:focus {
-  border-color: #af94ed;
+  border-color: #8b5cf6;
 }
 
 .setup-textarea::placeholder {
-  color: #555;
+  color: #bbb;
 }
 
 .setup-field-hint {
   font-size: 12px;
-  color: #666;
+  color: #999;
   margin: 6px 0 0;
 }
 
 .setup-field-error {
   font-size: 13px;
-  color: #ff6b6b;
+  color: #e74c3c;
   margin: 6px 0 0;
 }
 
@@ -604,7 +604,7 @@ body{
   gap: 12px;
   padding: 16px 20px;
   padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
-  background: linear-gradient(transparent, #1a1a2e 25%);
+  background: linear-gradient(transparent, #f0e8fa 25%);
   z-index: 1;
 }
 
@@ -625,8 +625,8 @@ body{
 }
 
 .setup-btn-back {
-  background: rgba(255,255,255,0.1);
-  color: #fff;
+  background: #e8dff0;
+  color: #6b46c1;
   max-width: 100px;
 }
 
@@ -646,49 +646,58 @@ body{
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   cursor: pointer;
   user-select: none;
+}
+
+.talent-card-portrait {
+  width: 64px;
+  height: 80px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 2px solid transparent;
   transition: all 0.25s ease;
   opacity: 0.25;
   filter: grayscale(80%) brightness(0.5);
 }
 
-.talent-card.selected {
+.talent-card.selected .talent-card-portrait {
   opacity: 1;
   filter: none;
+  border-color: #8b5cf6;
+  box-shadow: 0 0 16px rgba(139,92,246,0.45);
 }
 
-.talent-card-img {
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  overflow: hidden;
-  border: 2px solid transparent;
-  transition: border-color 0.25s, box-shadow 0.25s;
-}
-
-.talent-card.selected .talent-card-img {
-  border-color: #af94ed;
-  box-shadow: 0 0 18px rgba(175,148,237,0.55);
-}
-
-.talent-card-img img {
+.talent-card-portrait img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
 }
 
+.talent-card-logo {
+  width: 56px;
+  height: auto;
+  transition: all 0.25s ease;
+}
+
+.talent-card-logo img {
+  width: 100%;
+  height: auto;
+  display: block;
+  pointer-events: none;
+}
+
 .talent-card-name {
-  font-size: 11px;
-  color: #666;
+  font-size: 10px;
+  color: #999;
   text-align: center;
   transition: color 0.25s;
 }
 
 .talent-card.selected .talent-card-name {
-  color: #fff;
+  color: #6b46c1;
 }
 
 /* Horizontal scroll (最推し) */
@@ -755,15 +764,16 @@ body{
 
 /* Confirmation */
 .setup-confirm {
-  background: rgba(255,255,255,0.05);
+  background: #fff;
   border-radius: 16px;
   padding: 20px;
   margin-top: 16px;
+  box-shadow: 0 2px 12px rgba(107,70,193,0.08);
 }
 
 .confirm-row {
   padding: 14px 0;
-  border-bottom: 1px solid rgba(255,255,255,0.08);
+  border-bottom: 1px solid #ede4f5;
 }
 
 .confirm-row:last-child {
@@ -773,14 +783,14 @@ body{
 .confirm-label {
   display: block;
   font-size: 11px;
-  color: #af94ed;
+  color: #8b5cf6;
   margin-bottom: 4px;
   letter-spacing: 0.05em;
 }
 
 .confirm-value {
   font-size: 15px;
-  color: #fff;
+  color: #444;
 }
 
 .confirm-talent {
@@ -799,7 +809,7 @@ body{
 .setup-confirm-note {
   text-align: center;
   font-size: 12px;
-  color: #666;
+  color: #aaa;
   margin-top: 16px;
 }
 
@@ -823,19 +833,19 @@ body{
 }
 
 .setup-success h2 {
-  color: #af94ed;
+  color: #6b46c1;
   margin: 0 0 8px;
   font-size: 20px;
 }
 
 .setup-success p {
-  color: #ccc;
+  color: #888;
   margin: 0;
   font-size: 15px;
 }
 
 .setup-success-sub {
-  color: #666 !important;
+  color: #bbb !important;
   font-size: 12px !important;
   margin-top: 8px !important;
 }
@@ -846,7 +856,7 @@ body{
     display: flex;
     justify-content: center;
     align-items: center;
-    background: rgba(0,0,0,0.7);
+    background: rgba(80,50,120,0.35);
   }
 
   .setup-container {
@@ -854,8 +864,8 @@ body{
     max-height: 80vh;
     border-radius: 20px;
     overflow: hidden;
-    background: #1a1a2e;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    background: #f0e8fa;
+    box-shadow: 0 20px 60px rgba(80,50,120,0.2);
   }
 
   .setup-grid {
