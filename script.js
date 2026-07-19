@@ -384,18 +384,29 @@ function showWizardPage(index) {
 
 function updateConfirmPage() {
   document.getElementById('confirm-name').textContent = wizardState.playerName
+  document.getElementById('confirm-comment').textContent = wizardState.comment || '（未入力）'
 
-  var ut = TALENTS[wizardState.ultimateOshi]
-  var utEl = document.getElementById('confirm-ultimate')
-  if (ut) {
-    utEl.innerHTML = '<span class="confirm-talent"><img src="' + talentLogoPath(wizardState.ultimateOshi) + '" class="confirm-talent-icon">' + ut.name + '</span>'
-  } else {
-    utEl.textContent = '未選択'
+  function makeCard(id) {
+    var t = TALENTS[id]
+    var card = document.createElement('div')
+    card.className = 'confirm-card'
+    card.innerHTML =
+      '<div class="confirm-card-portrait"><img src="images/talents/' + id + '.webp" alt="' + t.name + '" loading="lazy"></div>' +
+      '<div class="confirm-card-logo"><img src="' + talentLogoPath(id) + '" alt="' + t.name + '" loading="lazy"></div>'
+    return card
   }
 
-  var favNames = wizardState.favorites.map(function (id) { return TALENTS[id].name }).join('、')
-  document.getElementById('confirm-favorites').textContent = favNames || 'なし'
-  document.getElementById('confirm-comment').textContent = wizardState.comment || '（未入力）'
+  var utScroll = document.getElementById('confirm-ultimate-scroll')
+  utScroll.innerHTML = ''
+  if (wizardState.ultimateOshi) {
+    utScroll.appendChild(makeCard(wizardState.ultimateOshi))
+  }
+
+  var favScroll = document.getElementById('confirm-favorites-scroll')
+  favScroll.innerHTML = ''
+  wizardState.favorites.forEach(function (id) {
+    favScroll.appendChild(makeCard(id))
+  })
 }
 
 function nextPage() {
@@ -469,11 +480,13 @@ function showHomeScreen(data) {
     })
   }
 
-  // コメント入力
+  // コメント入力（ボタン切替）
   var commentInput = document.getElementById('input-comment')
-  if (commentInput) {
+  var commentBtn = document.getElementById('comment-next-btn')
+  if (commentInput && commentBtn) {
     commentInput.addEventListener('input', function () {
       wizardState.comment = commentInput.value
+      commentBtn.textContent = commentInput.value.trim() ? '確認画面へ' : 'スキップ'
     })
   }
 

@@ -892,17 +892,50 @@ body{
   color: #444;
 }
 
-.confirm-talent {
+/* Confirm scroll card */
+.confirm-hscroll {
   display: flex;
-  align-items: center;
   gap: 8px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin-top: 8px;
+  padding-bottom: 4px;
 }
 
-.confirm-talent-icon {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
+.confirm-card {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 10px;
+  background: #f5f0ff;
+  border-radius: 10px;
+}
+
+.confirm-card-portrait {
+  width: 48px;
+  height: 60px;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.confirm-card-portrait img {
+  width: 100%;
+  height: 100%;
   object-fit: cover;
+  display: block;
+}
+
+.confirm-card-logo {
+  width: 48px;
+  height: auto;
+}
+
+.confirm-card-logo img {
+  width: 100%;
+  height: auto;
+  display: block;
 }
 
 .setup-confirm-note {
