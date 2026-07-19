@@ -562,6 +562,8 @@ function showHomeScreen(data) {
   }
 
   if (monitor) monitor.addEventListener('click', openPC)
+  var phone = document.getElementById('pc-smartphone')
+  if (phone) phone.addEventListener('click', openPC)
   if (pcClickArea) pcClickArea.addEventListener('click', function (e) {
     if (e.target === pcClickArea) openPC()
   })
