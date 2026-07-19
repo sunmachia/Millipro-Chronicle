@@ -197,42 +197,85 @@ function initWizard() {
   }
   document.getElementById('input-name').value = ''
   document.getElementById('input-comment').value = ''
-  renderUltimateOshiCards()
+  renderUltimateCarousel()
   renderFavoriteCards()
   showWizardPage(0)
 }
 
-function renderUltimateOshiCards() {
-  const container = document.getElementById('ultimate-oshi-list')
-  container.innerHTML = ''
-  Object.entries(TALENTS).forEach(function (_ref) {
-    var id = _ref[0], t = _ref[1]
+function renderUltimateCarousel() {
+  var track = document.getElementById('ultimate-carousel-track')
+  var dots = document.getElementById('ultimate-carousel-dots')
+  track.innerHTML = ''
+  dots.innerHTML = ''
+
+  var talentIds = Object.keys(TALENTS)
+  var startId = wizardState.ultimateOshi || talentIds[0]
+
+  talentIds.forEach(function (id) {
+    var t = TALENTS[id]
     var card = document.createElement('div')
-    card.className = 'talent-card'
-    card.dataset.id = id
+    card.className = 'carousel-card'
     var portraitDiv = document.createElement('div')
-    portraitDiv.className = 'talent-card-portrait'
+    portraitDiv.className = 'carousel-card-portrait'
     var portraitImg = document.createElement('img')
     portraitImg.src = 'images/talents/' + id + '.webp'
     portraitImg.alt = t.name
     portraitImg.loading = 'lazy'
     portraitDiv.appendChild(portraitImg)
     var logoDiv = document.createElement('div')
-    logoDiv.className = 'talent-card-logo'
+    logoDiv.className = 'carousel-card-logo'
     var logoImg = document.createElement('img')
     logoImg.src = talentLogoPath(id)
     logoImg.alt = t.name
     logoImg.loading = 'lazy'
     logoDiv.appendChild(logoImg)
     var nameSpan = document.createElement('span')
-    nameSpan.className = 'talent-card-name'
+    nameSpan.className = 'carousel-card-name'
     nameSpan.textContent = t.name
     card.appendChild(portraitDiv)
     card.appendChild(logoDiv)
     card.appendChild(nameSpan)
-    card.addEventListener('click', function () { selectUltimate(id) })
-    container.appendChild(card)
+    track.appendChild(card)
+
+    var dot = document.createElement('div')
+    dot.className = 'carousel-dot'
+    dot.addEventListener('click', function () {
+      goToSlide(parseInt(dot.dataset.index))
+    })
+    dots.appendChild(dot)
   })
+
+  var startIndex = talentIds.indexOf(startId)
+  if (startIndex < 0) startIndex = 0
+
+  wizardState.carouselIndex = startIndex
+  wizardState.ultimateOshi = talentIds[startIndex]
+  goToSlide(startIndex)
+}
+
+function goToSlide(index) {
+  var track = document.getElementById('ultimate-carousel-track')
+  var talentIds = Object.keys(TALENTS)
+  var clamped = Math.max(0, Math.min(index, talentIds.length - 1))
+
+  track.style.transform = 'translateX(-' + (clamped * 100) + '%)'
+
+  var dots = document.querySelectorAll('.carousel-dot')
+  dots.forEach(function (d, i) {
+    d.classList.toggle('active', i === clamped)
+    d.dataset.index = i
+  })
+
+  wizardState.carouselIndex = clamped
+  wizardState.ultimateOshi = talentIds[clamped]
+}
+
+function nextSlide() {
+  goToSlide(wizardState.carouselIndex + 1)
+}
+
+function prevSlide() {
+  goToSlide(wizardState.carouselIndex - 1)
 }
 
 function renderFavoriteCards() {
@@ -266,14 +309,6 @@ function renderFavoriteCards() {
     card.addEventListener('click', function () { toggleFavorite(id) })
     container.appendChild(card)
   })
-}
-
-function selectUltimate(id) {
-  wizardState.ultimateOshi = id
-  document.querySelectorAll('#ultimate-oshi-list .talent-card').forEach(function (c) {
-    c.classList.toggle('selected', c.dataset.id === id)
-  })
-  document.getElementById('ultimate-next-btn').classList.remove('disabled')
 }
 
 function toggleFavorite(id) {
@@ -335,6 +370,14 @@ function showWizardPage(index) {
 
   if (index === 4) updateConfirmPage()
 
+  if (index === 1) {
+    var talentIds = Object.keys(TALENTS)
+    var currentId = wizardState.ultimateOshi
+    var restoreIndex = currentId ? talentIds.indexOf(currentId) : 0
+    if (restoreIndex < 0) restoreIndex = 0
+    goToSlide(restoreIndex)
+  }
+
   var container = document.querySelector('.setup-pages')
   if (container) container.scrollTop = 0
 }
@@ -367,8 +410,6 @@ function nextPage() {
     document.getElementById('name-error').classList.add('hidden')
     wizardState.playerName = name
   }
-
-  if (page === 1 && !wizardState.ultimateOshi) return
 
   if (page === 3) {
     wizardState.comment = document.getElementById('input-comment').value
@@ -452,6 +493,32 @@ function showHomeScreen(data) {
   })
 
   // 確定
-  var confirmBtn = document.querySelector('.setup-btn-confirm')
-  if (confirmBtn) confirmBtn.addEventListener('click', confirmSetup)
+  var confirmBtn2 = document.getElementById('setup-confirm-btn')
+  if (confirmBtn2) confirmBtn2.addEventListener('click', confirmSetup)
+
+  // 最推し決定
+  var decideBtn = document.getElementById('ultimate-decide-btn')
+  if (decideBtn) decideBtn.addEventListener('click', nextPage)
+
+  // カルーセル矢印
+  var prevArrow = document.getElementById('carousel-prev')
+  var nextArrow = document.getElementById('carousel-next')
+  if (prevArrow) prevArrow.addEventListener('click', prevSlide)
+  if (nextArrow) nextArrow.addEventListener('click', nextSlide)
+
+  // スワイプ
+  var viewport = document.querySelector('.carousel-viewport')
+  if (viewport) {
+    var touchStartX = 0
+    viewport.addEventListener('touchstart', function (e) {
+      touchStartX = e.touches[0].clientX
+    }, { passive: true })
+    viewport.addEventListener('touchend', function (e) {
+      var diff = touchStartX - e.changedTouches[0].clientX
+      if (Math.abs(diff) > 50) {
+        if (diff > 0) nextSlide()
+        else prevSlide()
+      }
+    }, { passive: true })
+  }
 })()

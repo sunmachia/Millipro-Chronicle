@@ -700,19 +700,118 @@ body{
   color: #6b46c1;
 }
 
-/* Horizontal scroll (最推し) */
-.setup-hscroll {
+/* Carousel (最推し) */
+.carousel-container {
   display: flex;
-  gap: 14px;
-  padding: 16px 0;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  scroll-snap-type: x mandatory;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 0;
+  margin-top: 8px;
 }
 
-.setup-hscroll .talent-card {
+.carousel-arrow {
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 50%;
+  background: #fff;
+  color: #8b5cf6;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(107,70,193,0.12);
+  transition: all 0.15s;
   flex-shrink: 0;
-  scroll-snap-align: center;
+  z-index: 1;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+.carousel-arrow:active {
+  transform: scale(0.88);
+}
+
+.carousel-viewport {
+  overflow: hidden;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 4px 20px rgba(107,70,193,0.10);
+  width: 100%;
+  max-width: 280px;
+}
+
+.carousel-track {
+  display: flex;
+  transition: transform 0.35s cubic-bezier(0.22, 0.1, 0.22, 1);
+}
+
+.carousel-card {
+  flex-shrink: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 20px 18px;
+  box-sizing: border-box;
+}
+
+.carousel-card-portrait {
+  width: 150px;
+  height: 200px;
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+
+.carousel-card-portrait img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.carousel-card-logo {
+  width: 120px;
+  height: auto;
+  margin-bottom: 6px;
+}
+
+.carousel-card-logo img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.carousel-card-name {
+  font-size: 14px;
+  color: #6b46c1;
+  font-weight: bold;
+}
+
+.carousel-dots {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+
+.carousel-dot {
+  width: 10px;
+  height: 10px;
+  background: #d4c5f0;
+  transform: rotate(45deg);
+  cursor: pointer;
+  transition: all 0.25s;
+  flex-shrink: 0;
+}
+
+.carousel-dot.active {
+  background: #8b5cf6;
 }
 
 /* Grid (推し) */
@@ -872,7 +971,16 @@ body{
     grid-template-columns: repeat(5, 1fr);
   }
 
-  .setup-hscroll {
-    justify-content: center;
+  .carousel-viewport {
+    max-width: 320px;
+  }
+
+  .carousel-card-portrait {
+    width: 170px;
+    height: 220px;
+  }
+
+  .carousel-card-logo {
+    width: 140px;
   }
 }

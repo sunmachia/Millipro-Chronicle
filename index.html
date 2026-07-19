@@ -117,16 +117,23 @@
         </div>
       </div>
 
-      <!-- Page 2: Ultimate Oshi -->
+      <!-- Page 2: Ultimate Oshi (Carousel) -->
       <div class="setup-page hidden" data-page="1">
         <div class="setup-page-inner">
           <h2 class="setup-title">✦ 最推し ✦</h2>
-          <p class="setup-desc">あなたの最推しを1人選んでください</p>
-          <div class="setup-hscroll" id="ultimate-oshi-list"></div>
+          <p class="setup-desc">スワイプして最推しを決めよう！</p>
+          <div class="carousel-container">
+            <button class="carousel-arrow carousel-prev" id="carousel-prev">‹</button>
+            <div class="carousel-viewport">
+              <div class="carousel-track" id="ultimate-carousel-track"></div>
+            </div>
+            <button class="carousel-arrow carousel-next" id="carousel-next">›</button>
+          </div>
+          <div class="carousel-dots" id="ultimate-carousel-dots"></div>
         </div>
         <div class="setup-footer">
           <button class="setup-btn setup-btn-back">戻る</button>
-          <button class="setup-btn setup-btn-next disabled" id="ultimate-next-btn">次へ</button>
+          <button class="setup-btn setup-btn-confirm" id="ultimate-decide-btn">最推し決定</button>
         </div>
       </div>
 
@@ -191,7 +198,7 @@
         </div>
         <div class="setup-footer">
           <button class="setup-btn setup-btn-back">戻る</button>
-          <button class="setup-btn setup-btn-confirm">確定する</button>
+          <button class="setup-btn setup-btn-confirm" id="setup-confirm-btn">確定する</button>
         </div>
       </div>
 
