@@ -5,15 +5,18 @@
   bgm.volume = 0.7
 
   window._bgmTimer = null
+  window._bgmStopped = false
   const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
 
   function onInteraction() {
+    if (window._bgmStopped) return
     if (window._bgmTimer) return
     if (!bgm.paused) return
     if (isMobile) {
       bgm.play().catch(() => {})
     } else {
       window._bgmTimer = setTimeout(() => {
+        if (window._bgmStopped) return
         bgm.play().catch(() => {})
       }, 2000)
     }
@@ -31,6 +34,7 @@
 function stopBgm() {
   const bgm = document.getElementById('title-bgm')
   if (!bgm) return
+  window._bgmStopped = true
   if (window._bgmTimer) {
     clearTimeout(window._bgmTimer)
     window._bgmTimer = null
