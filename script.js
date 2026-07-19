@@ -219,12 +219,14 @@ function applySettingsToBgm() {
   var s = getSettings()
   applyVolume(s.volume)
   var bgm = document.getElementById('title-bgm')
-  if (bgm) {
-    if (s.bgmEnabled) {
+  var titleScreen = document.getElementById('title-screen')
+  if (!bgm) return
+  if (s.bgmEnabled) {
+    if (titleScreen && !titleScreen.classList.contains('hidden')) {
       bgm.play().catch(function () {})
-    } else {
-      bgm.pause()
     }
+  } else {
+    bgm.pause()
   }
 }
 
