@@ -2,7 +2,7 @@
 ;(function () {
   const bgm = document.getElementById('title-bgm')
   if (!bgm) return
-  bgm.volume = 0.7
+  applyVolume(getSettings().volume)
 
   window._bgmTimer = null
   window._bgmStopped = false
@@ -17,6 +17,7 @@
     } else {
       window._bgmTimer = setTimeout(() => {
         if (window._bgmStopped) return
+        applyVolume(getSettings().volume)
         bgm.play().catch(() => {})
       }, 2000)
     }
@@ -42,7 +43,6 @@ function stopBgm() {
   if (bgm.paused) return
   bgm.pause()
   bgm.currentTime = 0
-  bgm.volume = 0.7
 }
 
 // パーティクル生成
@@ -102,10 +102,13 @@ document.getElementById('btn-setting').addEventListener('click', (e) => {
 
 // タイトル → ホーム（トランジション付き）
 document.getElementById('title-screen').addEventListener('click', () => {
-  const se = document.getElementById('tap-se')
-  if (se) {
-    se.currentTime = 0
-    se.play().catch(() => {})
+  var _s = getSettings()
+  if (_s.seEnabled) {
+    var se = document.getElementById('tap-se')
+    if (se) {
+      se.currentTime = 0
+      se.play().catch(function () {})
+    }
   }
 
   stopBgm()
@@ -181,6 +184,48 @@ function saveUserData(data) {
 
 function talentLogoPath(id) {
   return id === 'rei' ? 'images/rogo/reirogo.webp' : 'images/rogo/' + id + 'rogo.png'
+}
+
+// ============================================================
+// システム設定 (音量・効果音・BGM)
+// ============================================================
+var SETTINGS_KEY = 'millipro_settings'
+
+function loadSettings() {
+  try {
+    var raw = localStorage.getItem(SETTINGS_KEY)
+    return raw ? JSON.parse(raw) : null
+  } catch (e) { return null }
+}
+
+function saveSettings(settings) {
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings))
+}
+
+function defaultSettings() {
+  return { volume: 70, seEnabled: true, bgmEnabled: true }
+}
+
+function getSettings() {
+  return loadSettings() || defaultSettings()
+}
+
+function applyVolume(vol) {
+  var bgm = document.getElementById('title-bgm')
+  if (bgm) bgm.volume = (vol / 100) * 0.7
+}
+
+function applySettingsToBgm() {
+  var s = getSettings()
+  applyVolume(s.volume)
+  var bgm = document.getElementById('title-bgm')
+  if (bgm) {
+    if (s.bgmEnabled) {
+      bgm.play().catch(function () {})
+    } else {
+      bgm.pause()
+    }
+  }
 }
 
 let wizardState = {
@@ -615,4 +660,95 @@ function showHomeScreen(data) {
       if (action) action()
     })
   })
+})()
+
+// ============================================================
+// 設定UI操作
+// ============================================================
+;(function () {
+  var settings = getSettings()
+
+  function refreshSettingsUI() {
+    var fill = document.getElementById('setting-volume-fill')
+    if (fill) fill.style.width = settings.volume + '%'
+
+    document.querySelectorAll('.setting-toggle').forEach(function (el) {
+      var key = el.dataset.setting
+      var isOn = key === 'se' ? settings.seEnabled : settings.bgmEnabled
+      el.classList.toggle('on', isOn)
+    })
+  }
+
+  function saveAndApply() {
+    saveSettings(settings)
+    if (settings.bgmEnabled) {
+      applyVolume(settings.volume)
+      applySettingsToBgm()
+    } else {
+      var bgm = document.getElementById('title-bgm')
+      if (bgm) bgm.pause()
+    }
+    window._milliproSettings = settings
+  }
+
+  // 音量バー
+  var volumeBar = document.getElementById('setting-volume-bar')
+  if (volumeBar) {
+    function setVolumeFromEvent(e) {
+      var rect = volumeBar.getBoundingClientRect()
+      var x = (e.clientX || e.touches[0].clientX) - rect.left
+      var pct = Math.round(Math.max(0, Math.min(100, (x / rect.width) * 100)))
+      settings.volume = pct
+      var fill = document.getElementById('setting-volume-fill')
+      if (fill) fill.style.width = pct + '%'
+      saveAndApply()
+    }
+
+    volumeBar.addEventListener('mousedown', function (e) {
+      setVolumeFromEvent(e)
+      function onMove(ev) { setVolumeFromEvent(ev) }
+      function onUp() {
+        document.removeEventListener('mousemove', onMove)
+        document.removeEventListener('mouseup', onUp)
+      }
+      document.addEventListener('mousemove', onMove)
+      document.addEventListener('mouseup', onUp)
+    })
+
+    volumeBar.addEventListener('touchstart', function (e) {
+      setVolumeFromEvent(e)
+    }, { passive: true })
+
+    volumeBar.addEventListener('touchmove', function (e) {
+      setVolumeFromEvent(e)
+    }, { passive: true })
+  }
+
+  // トグル
+  document.querySelectorAll('.setting-toggle').forEach(function (el) {
+    el.addEventListener('click', function () {
+      var key = el.dataset.setting
+      if (key === 'se') {
+        settings.seEnabled = !settings.seEnabled
+      } else if (key === 'bgm') {
+        settings.bgmEnabled = !settings.bgmEnabled
+      }
+      el.classList.toggle('on')
+      saveAndApply()
+    })
+  })
+
+  // 設定ポップアップが開かれたらUIを最新に
+  var origOpenPopup = openPopup
+  window.openPopup = function (id) {
+    if (id === 'popup-setting') {
+      settings = getSettings()
+      refreshSettingsUI()
+    }
+    origOpenPopup(id)
+  }
+
+  // 初回反映
+  refreshSettingsUI()
+  saveAndApply()
 })()
