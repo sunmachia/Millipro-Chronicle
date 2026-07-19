@@ -595,12 +595,13 @@ function showHomeScreen(data) {
   var APP_ACTIONS = {
     unishare: function () { window.open('https://milli-unishare.onrender.com') },
     sns: function () { alert('SNS機能は準備中です') },
-    store: function () { alert('ストア機能は準備中です') },
-    illust: function () { alert('イラスト機能は準備中です') },
-    settings: function () {
+    shop: function () { alert('Milli Shopは準備中です') },
+    canvas: function () { alert('Canvasは準備中です') },
+    system: function () {
       closePC()
       openPopup('popup-setting')
     },
+    bloom: function () { alert('Milli Bloomは準備中です') },
     milligames: function () { window.open('https://milli-games.onrender.com') },
     gameA: function () { alert('「ミリプロアドベンチャー」は準備中です') },
     gameB: function () { alert('「タレントクイズ」は準備中です') },
