@@ -262,6 +262,10 @@
       </div>
       <div class="pc-divider">━━━ ゲーム ━━━</div>
       <div class="pc-apps-grid">
+        <div class="pc-app" data-app="dungeon">
+          <div class="pc-app-icon pc-app-emoji">⚔️</div>
+          <span class="pc-app-label">配信ダンジョン</span>
+        </div>
         <div class="pc-app" data-app="milligames">
           <div class="pc-app-icon"><img src="images/pc/Milli Games.png" alt="Milli Games"></div>
           <span class="pc-app-label">Milli Games</span>
@@ -399,6 +403,18 @@
   <div id="loading" class="hidden">
     <div class="spinner"></div>
     <span>読み込み中...</span>
+  </div>
+</div>
+
+<!-- 配信ダンジョン -->
+<div id="dungeon-screen" class="hidden">
+  <div class="dungeon-window">
+    <div class="dungeon-header">
+      <span class="dungeon-title">⚔️ 配信ダンジョン</span>
+      <span class="dungeon-tries">挑戦可能: <b id="dungeon-tries-left">5</b> / 5（1時間）</span>
+      <button class="dungeon-close-btn" id="dungeon-close-btn">✕</button>
+    </div>
+    <div class="dungeon-body" id="dungeon-body"></div>
   </div>
 </div>
 

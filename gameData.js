@@ -5,7 +5,7 @@
 // ============================================================
 
 const GAME_DATA_KEY = 'millipro_gamedata'
-const GAME_DATA_VERSION = 1
+const GAME_DATA_VERSION = 2
 
 // ---- 定数・バランステーブル（企画書 Ver.0.4 初期案）----
 
@@ -70,12 +70,26 @@ function expRequiredForLevel(level) {
 
 // 配信ダンジョン報酬（§16）: ボスランク別
 const DUNGEON_REWARDS = {
-  1: { currency: 20, exp: 15 },
-  2: { currency: 50, exp: 35 },
-  3: { currency: 100, exp: 70 },
-  4: { currency: 180, exp: 120 },
-  5: { currency: 300, exp: 200 },
+  1: { currency: 20, exp: 15, cheer: 10 },
+  2: { currency: 50, exp: 35, cheer: 20 },
+  3: { currency: 100, exp: 70, cheer: 40 },
+  4: { currency: 180, exp: 120, cheer: 70 },
+  5: { currency: 300, exp: 200, cheer: 120 },
 }
+
+// 配信ダンジョンのボス（§16: タレントではなく"トラブル"）
+// 数値: 推奨Lvでは安定勝利できるが、1つ下のレベルではかなり苦戦する設計
+const DUNGEON_BOSSES = [
+  { rank: 1, id: 'slime', name: '寝坊スライムキング', emoji: '🫠', hp: 190, atk: 11, def: 2, reqLevel: 1, desc: '配信開始時間に寝坊するお馴染みのトラブル' },
+  { rank: 2, id: 'golem', name: '回線ゴーレム', emoji: '🪨', hp: 380, atk: 22, def: 8, reqLevel: 10, desc: '重い！繋がらない！回線トラブルの化身' },
+  { rank: 3, id: 'dragon', name: '締切ドラゴン', emoji: '🐉', hp: 610, atk: 35, def: 14, reqLevel: 20, desc: '何かと襲いかかる締切の大暴君' },
+  { rank: 4, id: 'bug', name: 'バグの魔王', emoji: '👾', hp: 860, atk: 47, def: 18, reqLevel: 30, desc: 'ゲーム配信中に現れる最凶の不具合' },
+  { rank: 5, id: 'crash', name: 'システムクラッシュ', emoji: '💥', hp: 1090, atk: 59, def: 24, reqLevel: 40, desc: 'あらゆるトラブルの頂点に立つ存在' },
+]
+
+// ダンジョン挑戦頻度制限（§16: 1時間に5回まで）
+const DUNGEON_LIMIT = 5
+const DUNGEON_LIMIT_WINDOW_MS = 60 * 60 * 1000
 
 // ショップ品目（§18）
 const SHOP_GOODS = [
@@ -114,6 +128,7 @@ function defaultGameData() {
     gallery: { artworks: [] },
     zukan: { quotes: {}, streams: {}, trivia: {}, history: {}, memoryCards: {} },
     garden: { areas: {} },
+    dungeon: { attempts: [] },
     quests: { daily: { date: null, done: [] }, weekly: { week: null, done: [] } },
     memoryShards: [],
     stats: { videosWatched: 0, dungeonClears: 0, artworksSold: 0, galleryReactions: 0 },
@@ -181,4 +196,42 @@ function canUnlockJob(data, jobId) {
   if (data.level < 5) return false
   var def = JOB_DEFS[jobId]
   return data.points[def.point] >= 10 // 解放目安（実装時に調整）
+}
+
+// ---- 配信ダンジョン（§16）----
+
+// 残り挑戦回数（1時間窓で最大 DUNGEON_LIMIT 回）
+function remainingDungeonTries(data) {
+  var now = Date.now()
+  var attempts = (data.dungeon && data.dungeon.attempts || []).filter(function (t) {
+    return now - t < DUNGEON_LIMIT_WINDOW_MS
+  })
+  data.dungeon.attempts = attempts
+  return Math.max(0, DUNGEON_LIMIT - attempts.length)
+}
+
+function recordDungeonTry(data) {
+  if (!data.dungeon) data.dungeon = { attempts: [] }
+  data.dungeon.attempts.push(Date.now())
+}
+
+// 挑戦タレントのステータス（プレイヤーレベル基準）
+function talentBattleStats(level) {
+  return {
+    maxHp: 90 + level * 12,
+    atk: 12 + level * 2,
+    def: 5 + Math.floor(level / 2),
+  }
+}
+
+// ボス定義をランクで取得
+function dungeonBossByRank(rank) {
+  return DUNGEON_BOSSES.find(function (b) { return b.rank === rank }) || null
+}
+
+// 勝利/敗北時の報酬
+function dungeonReward(rank, won) {
+  var r = DUNGEON_REWARDS[rank] || DUNGEON_REWARDS[1]
+  if (won) return { currency: r.currency, exp: r.exp, cheer: r.cheer }
+  return { currency: Math.round(r.currency * 0.1), exp: 0, cheer: 0 } // 敗北時はわずかな通貨のみ
 }
