@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>配信ダンジョン | Milipro Chronicle</title>
+  <link rel="icon" href="images/icon/favicon.ico">
+  <link rel="apple-touch-icon" href="images/icon/192.png">
+  <link rel="stylesheet" href="dungeon.css">
+</head>
+<body>
+
+<div id="app">
+  <!-- 配信ヘッダー -->
+  <header class="stream-header">
+    <div class="header-left">
+      <button class="header-btn" id="btn-back" title="メイン画面に戻る">←</button>
+      <span class="live-badge"><span class="live-dot"></span>LIVE</span>
+    </div>
+    <div class="header-title">
+      <div class="stream-title" id="stream-title">配信ダンジョン</div>
+      <div class="stream-meta" id="stream-meta">トラブル討伐ライブ</div>
+    </div>
+    <div class="header-right">
+      <span class="viewer-count" id="viewer-count">👁 1,234</span>
+      <span class="currency-chip" id="header-currency">💰 0</span>
+    </div>
+  </header>
+
+  <!-- メイン -->
+  <main class="stream-layout">
+    <!-- ステージ側 -->
+    <section class="stage-area" id="stage-area">
+      <div id="stage-view"></div>
+    </section>
+
+    <!-- ライブチャット -->
+    <aside class="chat-area">
+      <div class="chat-header">
+        <span>ライブチャット</span>
+        <span class="chat-online" id="chat-online">1,234</span>
+      </div>
+      <div class="chat-log" id="chat-log"></div>
+      <div class="chat-input-bar">
+        <input id="chat-input" type="text" maxlength="40" placeholder="コメントを送信" autocomplete="off">
+        <button id="chat-send">送信</button>
+      </div>
+    </aside>
+  </main>
+</div>
+
+<audio id="dungeon-bgm" src="musics/title/mile stone/Mile Stone_inst.mp3" loop preload="auto"></audio>
+
+<script src="gameData.js"></script>
+<script src="dungeon.js"></script>
+</body>
+</html>
