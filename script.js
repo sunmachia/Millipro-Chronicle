@@ -498,6 +498,7 @@ function confirmSetup() {
   }
 
   saveUserData(data)
+  ensureGameData()
 
   var confirmCard = document.querySelector('.setup-page[data-page="4"] .setup-page-inner')
   confirmCard.innerHTML =
@@ -524,12 +525,133 @@ function showHomeScreen(data) {
   }
   document.getElementById('home-screen').classList.remove('hidden')
 
+  ensureGameData()
+  var statusBar = document.getElementById('player-status-bar')
+  if (statusBar) statusBar.classList.remove('hidden')
+  refreshPlayerStatus()
+
   // スマホは最初に真ん中（スマホ）の位置にスクロール
   if (window.innerWidth < 768) {
     var deskSection = document.querySelector('.room-desk')
     if (deskSection) deskSection.scrollIntoView({ behavior: 'auto', inline: 'start' })
   }
 }
+
+// ============================================================
+// プレイヤーステータス表示（Lv・通貨・EXP・ポイント）
+// ============================================================
+
+// 上位職判定（企画書 §20）
+function getUpperJobTitle(gd) {
+  var unlocked = Object.keys(JOB_DEFS).filter(function (id) {
+    return gd.jobs[id] && gd.jobs[id].unlocked
+  })
+  function has() {
+    var ids = Array.prototype.slice.call(arguments)
+    return ids.every(function (id) { return unlocked.indexOf(id) >= 0 })
+  }
+  if (has('illustrator', 'editor') || has('mix', 'editor')) return 'マルチクリエイター'
+  if (has('cheerleader', 'reporter')) return '古参勢'
+  if (has('cheerleader', 'fansite')) return 'コミュニティリーダー'
+  if (has('itabag', 'cheerleader')) return 'スーパーオタク'
+  return unlocked.length ? JOB_DEFS[unlocked[0]].name : 'ミリリス'
+}
+
+function expProgressPct(gd) {
+  var need = expNeededToNext(gd.level)
+  return need > 0 ? Math.min(100, Math.round((gd.exp / need) * 100)) : 100
+}
+
+// ステータスバー（ホーム画面上部）を更新
+function refreshPlayerStatus() {
+  var user = loadUserData()
+  var gd = loadGameData()
+  if (!user) return
+
+  var avatar = document.getElementById('status-avatar')
+  if (avatar) avatar.textContent = user.playerName.charAt(0)
+
+  var nameEl = document.getElementById('status-name')
+  if (nameEl) nameEl.textContent = user.playerName
+
+  var lvEl = document.getElementById('status-lv')
+  if (lvEl) lvEl.textContent = 'Lv.' + gd.level
+
+  var curEl = document.getElementById('status-currency')
+  if (curEl) curEl.textContent = '💰 ' + gd.currency
+
+  var fill = document.getElementById('status-exp-fill')
+  if (fill) fill.style.width = expProgressPct(gd) + '%'
+
+  var label = document.getElementById('status-exp-label')
+  if (label) {
+    var need = expNeededToNext(gd.level)
+    label.textContent = need > 0 ? gd.exp + ' / ' + need : 'MAX'
+  }
+
+  // PCデスクトップのユーザー情報にもレベルを反映
+  var idEl = document.getElementById('pc-user-id')
+  if (idEl) idEl.textContent = 'ID: ' + user.playerId + ' ・ Lv.' + gd.level
+
+  var namePc = document.getElementById('pc-user-name')
+  if (namePc) namePc.textContent = user.playerName
+}
+
+// プレイヤーカード（ポップアップ）を描画
+function renderPlayerCard() {
+  var user = loadUserData()
+  var gd = loadGameData()
+  var body = document.getElementById('player-card-body')
+  if (!body || !user) return
+
+  var title = getUpperJobTitle(gd)
+  var need = expNeededToNext(gd.level)
+  var stage = OFFICE_STAGES[gd.office.stage - 1]
+  var nextStage = OFFICE_STAGES[gd.office.stage]
+
+  var unlockedJobs = Object.keys(JOB_DEFS).filter(function (id) {
+    return gd.jobs[id] && gd.jobs[id].unlocked
+  })
+
+  var pointsHtml = POINT_KEYS.map(function (k) {
+    return '<span class="pt-chip">' + POINT_EMOJI[k] + ' ' + POINT_NAMES[k] + ' ' + gd.points[k] + '</span>'
+  }).join('')
+
+  var jobsHtml = unlockedJobs.length
+    ? unlockedJobs.map(function (id) {
+        return '<span class="pt-chip">' + JOB_DEFS[id].emoji + ' ' + JOB_DEFS[id].name + '</span>'
+      }).join('')
+    : '<div class="player-card-note">未解放（基本Lv5以上になると解放条件を確認できます）</div>'
+
+  body.innerHTML =
+    '<div class="player-card-head">' +
+      '<div class="player-card-avatar">' + user.playerName.charAt(0) + '</div>' +
+      '<div>' +
+        '<div class="player-card-name">' + user.playerName + '</div>' +
+        '<div class="player-card-title">' + title + '</div>' +
+        '<div class="player-card-id">ID: ' + user.playerId + '</div>' +
+      '</div>' +
+    '</div>' +
+
+    '<div class="player-card-section-title">ステータス</div>' +
+    '<div class="player-card-row"><span>レベル</span><span>Lv.' + gd.level + '</span></div>' +
+    '<div class="exp-bar"><div class="exp-bar-fill" style="width:' + expProgressPct(gd) + '%"></div></div>' +
+    '<div class="exp-label">' + (need > 0 ? 'EXP ' + gd.exp + ' / ' + need : 'EXP MAX') + '</div>' +
+    '<div class="player-card-row"><span>ゲーム内通貨</span><span>💰 ' + gd.currency + '</span></div>' +
+
+    '<div class="player-card-section-title">ポイント</div>' +
+    '<div class="player-card-pts">' + pointsHtml + '</div>' +
+
+    '<div class="player-card-section-title">事務所</div>' +
+    '<div class="player-card-row"><span>段階</span><span>' + (stage ? stage.name : '?') + '</span></div>' +
+    '<div class="player-card-row"><span>次段階</span><span>' + (nextStage ? nextStage.name + '（応援力 ' + nextStage.cost + '）' : 'MAX') + '</span></div>' +
+
+    '<div class="player-card-section-title">ジョブ</div>' +
+    '<div class="player-card-pts">' + jobsHtml + '</div>'
+}
+
+// 他の機能からも呼べるようにグローバル公開
+window.refreshPlayerStatus = refreshPlayerStatus
 
 // 設定画面のイベントリスナー
 ;(function () {
@@ -634,7 +756,17 @@ function showHomeScreen(data) {
   var userArea = document.getElementById('pc-user-area')
   if (userArea) {
     userArea.addEventListener('click', function () {
-      alert('プロフィール画面は準備中です')
+      renderPlayerCard()
+      openPopup('popup-player-card')
+    })
+  }
+
+  // ステータスバー → プレイヤーカード
+  var statusBtn = document.getElementById('status-open-btn')
+  if (statusBtn) {
+    statusBtn.addEventListener('click', function () {
+      renderPlayerCard()
+      openPopup('popup-player-card')
     })
   }
 

@@ -791,6 +791,223 @@ body{
   }
 }
 
+/* ========== プレイヤーステータスバー ========== */
+.player-status-bar {
+  position: fixed;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 150;
+  max-width: calc(100vw - 24px);
+}
+
+.status-trigger {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255,255,255,0.96);
+  border: 2px solid #af94ed;
+  border-radius: 999px;
+  padding: 6px 16px 6px 6px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.18);
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.status-trigger:hover {
+  box-shadow: 0 4px 18px rgba(175,148,237,0.45);
+}
+
+.status-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #af94ed, #8b7fd4);
+  color: #fff;
+  font-weight: bold;
+  font-size: 17px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.status-main {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+}
+
+.status-name {
+  font-size: 14px;
+  font-weight: bold;
+  color: #333;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.status-lv {
+  font-size: 12px;
+  color: #8b7fd4;
+  font-weight: bold;
+}
+
+.status-currency {
+  font-size: 14px;
+  font-weight: bold;
+  color: #b8860b;
+  white-space: nowrap;
+}
+
+.status-exp {
+  width: 90px;
+  height: 8px;
+  border-radius: 4px;
+  background: #eee;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.status-exp-fill {
+  display: block;
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #af94ed, #8b7fd4);
+  transition: width 0.4s ease;
+}
+
+.status-exp-label {
+  font-size: 10px;
+  color: #999;
+  white-space: nowrap;
+}
+
+/* ========== プレイヤーカード ========== */
+.player-card-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.player-card-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #af94ed, #8b7fd4);
+  color: #fff;
+  font-size: 26px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.player-card-name {
+  font-size: 18px;
+  font-weight: bold;
+  color: #333;
+}
+
+.player-card-title {
+  font-size: 13px;
+  color: #8b7fd4;
+  font-weight: bold;
+  margin-top: 2px;
+}
+
+.player-card-id {
+  font-size: 11px;
+  color: #999;
+  margin-top: 2px;
+  word-break: break-all;
+}
+
+.player-card-section-title {
+  font-size: 13px;
+  font-weight: bold;
+  color: #af94ed;
+  margin: 16px 0 8px;
+}
+
+.player-card-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 14px;
+  color: #555;
+}
+
+.player-card-row:last-child {
+  border-bottom: none;
+}
+
+.exp-bar {
+  height: 10px;
+  background: #eee;
+  border-radius: 5px;
+  overflow: hidden;
+  margin-top: 8px;
+}
+
+.exp-bar-fill {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #af94ed, #8b7fd4);
+  transition: width 0.4s ease;
+}
+
+.exp-label {
+  font-size: 11px;
+  color: #999;
+  text-align: right;
+  margin-top: 4px;
+}
+
+.player-card-pts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pt-chip {
+  background: #f8f6ff;
+  border: 1px solid #e4dcf7;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 12px;
+  color: #555;
+  white-space: nowrap;
+}
+
+.player-card-note {
+  font-size: 12px;
+  color: #999;
+  padding: 6px 0;
+}
+
+/* ========== PCデスクトップ ========== */
+.pc-user-name {
+  font-weight: bold;
+  font-size: 15px;
+  color: #333;
+}
+
+@media (max-width: 767px) {
+  .status-exp {
+    width: 60px;
+  }
+  .status-exp-label {
+    display: none;
+  }
+}
+
 @keyframes fadeIn {
   from { opacity: 0; transform: scale(0.95); }
   to { opacity: 1; transform: scale(1.0); }

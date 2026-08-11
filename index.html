@@ -85,7 +85,34 @@
   </div>
 </div>
 
+<!-- プレイヤーカード -->
+<div class="popup-overlay hidden" id="popup-player-card">
+  <div class="popup-content">
+    <div class="popup-header">プレイヤーカード</div>
+    <div class="popup-body" id="player-card-body"></div>
+    <div class="popup-footer">
+      <button class="popup-close-btn">閉じる</button>
+    </div>
+  </div>
+</div>
+
 <div id="home-screen" class="hidden">
+  <!-- プレイヤーステータスバー -->
+  <div id="player-status-bar" class="player-status-bar hidden">
+    <button class="status-trigger" id="status-open-btn">
+      <span class="status-avatar" id="status-avatar"></span>
+      <span class="status-main">
+        <span class="status-name" id="status-name"></span>
+        <span class="status-lv" id="status-lv">Lv.1</span>
+      </span>
+      <span class="status-currency" id="status-currency">💰 0</span>
+      <span class="status-exp" title="経験値">
+        <span class="status-exp-fill" id="status-exp-fill"></span>
+      </span>
+      <span class="status-exp-label" id="status-exp-label"></span>
+    </button>
+  </div>
+
   <div class="room-container" id="room-container">
 
     <!-- Left: Collection Shelf -->
@@ -378,6 +405,7 @@
 <audio id="title-bgm" src="musics/title/mile stone/Mile Stone_inst.mp3" loop preload="auto"></audio>
 <audio id="tap-se" src="musics/sound effects/tap to start.mp3" preload="auto"></audio>
 <script src="pwa.js"></script>
+<script src="gameData.js"></script>
 <script src="script.js"></script>
 </body>
 </html>
