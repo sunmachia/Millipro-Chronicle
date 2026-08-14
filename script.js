@@ -934,11 +934,11 @@ function copyMilliproPlayerId(pid) {
   }
 }
 
-// ログイン / 新規作成の送信
-function submitMilliproAuth(mode) {
-  var msg = document.getElementById('auth-msg')
-  var email = document.getElementById('auth-email').value.trim()
-  var pass = document.getElementById('auth-pass').value
+// ログイン / 新規作成の送信（gateMode ならログイン必須ゲートからの呼び出し）
+function submitMilliproAuth(mode, gateMode) {
+  var msg = document.getElementById(gateMode ? 'login-gate-msg' : 'auth-msg')
+  var email = document.getElementById(gateMode ? 'login-gate-email' : 'auth-email').value.trim()
+  var pass = document.getElementById(gateMode ? 'login-gate-pass' : 'auth-pass').value
   if (!email || !pass) {
     msg.textContent = 'メールアドレスとパスワードを入力してください。'
     return
@@ -948,23 +948,79 @@ function submitMilliproAuth(mode) {
   p.then(function () {
     var uid = getMilliproUid()
     if (!uid) throw new Error('uid not found')
-    return completeMilliproLogin(uid).then(function (res) {
-      refreshPlayerStatus()
-      renderExternalScreen()
+    return ensureLoginSync(uid).then(function (res) {
+      if (gateMode) {
+        hideLoginGate()
+      } else {
+        refreshPlayerStatus()
+        renderExternalScreen()
+      }
       runExternalSync()
-      var msg2 = document.getElementById('auth-msg')
-      if (msg2) msg2.textContent = '✓ アカウント連携しました（' + (res.syncMode === 'pulled' ? 'ゲームデータを読み込み' : 'ゲームデータを保存') + '）'
+      var msg2 = document.getElementById(gateMode ? 'login-gate-msg' : 'auth-msg')
+      if (msg2) msg2.textContent = '✓ ログインしました。ゲームデータを' + (res && res.syncMode === 'pulled' ? '読み込みました' : '保存しました')
     })
   }).catch(function (e) {
     msg.textContent = e && e.message ? e.message : 'エラーが発生しました。'
   })
 }
 
-// ログイン状態が変わったら（別タブ等）連携画面を再描画
-onMilliproAuth(function () {
+// ============================================================
+// ログイン必須ゲート（未ログインではゲームを操作できない）
+// ============================================================
+function showLoginGate() {
+  var gate = document.getElementById('login-gate')
+  if (gate) gate.classList.remove('hidden')
+}
+
+function hideLoginGate() {
+  var gate = document.getElementById('login-gate')
+  if (gate) gate.classList.add('hidden')
+}
+
+// ログイン後に一度だけクラウド同期を実行する（並行呼び出しは同じ Promise を共有）
+var loginSyncPromise = null
+function ensureLoginSync(uid) {
+  if (loginSyncPromise) return loginSyncPromise
+  loginSyncPromise = completeMilliproLogin(uid).then(function (res) {
+    loginSyncPromise = null
+    refreshPlayerStatus()
+    return res
+  }).catch(function (e) {
+    loginSyncPromise = null
+    console.warn('login sync failed:', e)
+    return null
+  })
+  return loginSyncPromise
+}
+
+// ログイン状態が変わったら（起動時・別タブ・ログアウト時）
+// 未ログインならゲートを表示し、ログイン済みならゲームデータを同期する
+// 注意: auth 未設定（config なし）の環境ではゲートを出さない
+onMilliproAuth(function (uid) {
+  if (!isAuthAvailable()) {
+    hideLoginGate()
+    return
+  }
+  if (uid) {
+    hideLoginGate()
+    ensureLoginSync(uid).then(function (res) {
+      if (res && res.syncMode === 'pulled') {
+        // クラウドが新しい → 表示中のデータを最新化
+        var home = document.getElementById('home-screen')
+        if (home && !home.classList.contains('hidden')) showHomeScreen(loadUserData())
+      }
+    })
+  } else {
+    if (isAuthAvailable()) showLoginGate()
+  }
   var popup = document.getElementById('popup-external')
   if (popup && !popup.classList.contains('hidden')) renderExternalScreen()
 })
+
+var gateLoginBtn = document.getElementById('login-gate-login-btn')
+var gateSignupBtn = document.getElementById('login-gate-signup-btn')
+if (gateLoginBtn) gateLoginBtn.addEventListener('click', function () { submitMilliproAuth('login', true) })
+if (gateSignupBtn) gateSignupBtn.addEventListener('click', function () { submitMilliproAuth('signup', true) })
 
 // 同期実行（外部報酬を付与して結果を表示）
 function runExternalSync() {

@@ -26,6 +26,21 @@
   </div>
 </div>
 
+<div id="login-gate" class="login-gate hidden">
+  <div class="login-gate-box">
+    <div class="login-gate-title">🔐 ミリプロ・クロニクル</div>
+    <div class="login-gate-sub">遊ぶにはアカウント連携（ログイン）が必要です</div>
+    <div class="login-gate-note">Milli Unishare / ミニゲームと同じアカウントでログインすると、プレイヤーIDとゲームデータが全サイトで共有されます。</div>
+    <input class="external-input" id="login-gate-email" type="email" placeholder="メールアドレス" autocomplete="email">
+    <input class="external-input" id="login-gate-pass" type="password" placeholder="パスワード" autocomplete="current-password">
+    <div class="external-input-row">
+      <button class="external-auth-btn" id="login-gate-login-btn">ログイン</button>
+      <button class="external-auth-btn secondary" id="login-gate-signup-btn">新規作成</button>
+    </div>
+    <div class="external-auth-msg" id="login-gate-msg"></div>
+  </div>
+</div>
+
 <div id="title-screen">
   <div class="title-button" id="btn-start">
     <img src="images/button/title/tap-to-start.png" alt="start">
