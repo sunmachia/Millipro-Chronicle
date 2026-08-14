@@ -50,8 +50,9 @@ function setMilliproPlayerId(id) {
 
 // ============================================================
 // 共通アカウント（Firebase Auth）: 3サイトすべてが同じユーザーを使う
-// データパス: millipro/users/{uid}/profile = { playerId, playerName, updatedAt }
+// データパス: millipro/users/{uid}/profile = { playerId, playerName, icon, comment, updatedAt }
 //            millipro/users/{uid}/gamedata = ゲームデータ（本アプリのみ同期）
+// 名前・アイコン・一言は各サイト共通で表示できる（各サイトのローカルに反映）
 // ============================================================
 
 function isAuthAvailable() {
@@ -95,13 +96,16 @@ function newPlayerIdFallback() {
   return 'P' + Date.now()
 }
 
-// プロフィールを保証する（無ければローカルの playerId で作成）
+// プロフィールを保証する（無ければローカルの playerId / 名前 / アイコン / 一言で作成）
+// 既存プロフィールに欠けている項目はローカル値で補充する
 // 戻り値: Promise<profile>
 function ensureMilliproProfile(uid) {
   var ud = null
   try { ud = JSON.parse(localStorage.getItem('millipro_userdata')) } catch (e) {}
   var localId = ud && ud.playerId
   var localName = ud && ud.playerName
+  var localIcon = ud && ud.icon
+  var localComment = ud && ud.comment
 
   return firebase.database().ref('millipro/users/' + uid + '/profile').once('value').then(function (snap) {
     var p = snap.val()
@@ -110,12 +114,16 @@ function ensureMilliproProfile(uid) {
       var changed = false
       if (!p.playerId) { p.playerId = localId || newPlayerIdFallback(); changed = true }
       if (!p.playerName && localName) { p.playerName = localName; changed = true }
+      if (!p.icon && localIcon) { p.icon = localIcon; changed = true }
+      if (!p.comment && localComment) { p.comment = localComment; changed = true }
       if (changed) firebase.database().ref('millipro/users/' + uid + '/profile').set(p)
       return p
     }
     var np = {
       playerId: localId || newPlayerIdFallback(),
       playerName: localName || '',
+      icon: localIcon || '',
+      comment: localComment || '',
       updatedAt: now,
     }
     firebase.database().ref('millipro/users/' + uid + '/profile').set(np)
@@ -123,7 +131,7 @@ function ensureMilliproProfile(uid) {
   })
 }
 
-// プロフィールの playerId / playerName をこの端末の localStorage に反映（他項目は保持）
+// プロフィールの playerId / playerName / icon / comment をこの端末の localStorage に反映（他項目は保持）
 // 戻り値: 反映後のユーザーデータ（なければ新規作成）
 function applyMilliproProfile(profile) {
   var ud = null
@@ -131,6 +139,8 @@ function applyMilliproProfile(profile) {
   if (!ud || typeof ud !== 'object') ud = { createdAt: Date.now() }
   ud.playerId = profile.playerId
   if (profile.playerName) ud.playerName = profile.playerName
+  if (profile.icon) ud.icon = profile.icon
+  if (profile.comment) ud.comment = profile.comment
   ud.updatedAt = Date.now()
   localStorage.setItem('millipro_userdata', JSON.stringify(ud))
   return ud
