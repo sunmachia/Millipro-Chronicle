@@ -17,8 +17,10 @@ const GAME_CLAIM_WINDOW_MS = 60 * 60 * 1000
 // 受取済みマーカーを transaction で書き、二重付与を防ぐ
 // メモ: RTDB の transaction は更新関数が undefined を返すと中断される。
 // 同じ参照を返す場合は中断されず committed になるため、必ず undefined で中断する
+// 付与成功時、deletePath があればイベントノードを削除（無料枠のストレージ消費を防ぐ）。
+// rewards/ マーカーは別デバイスからの二重付与防止のため残す
 // 戻り値: Promise<boolean>（付与できたか）
-function claimMarkerOnce(path, onGranted) {
+function claimMarkerOnce(path, onGranted, deletePath) {
   return new Promise(function (resolve) {
     var ref = firebase.database().ref(path)
     ref.transaction(function (current) {
@@ -31,6 +33,11 @@ function claimMarkerOnce(path, onGranted) {
         return
       }
       if (committed) {
+        if (deletePath) {
+          firebase.database().ref(deletePath).remove().catch(function (e) {
+            console.warn('consumed event delete failed:', deletePath, e)
+          })
+        }
         onGranted()
         resolve(true)
       } else {
@@ -61,7 +68,7 @@ function syncVideoRewards(gd, pid, db, result) {
             result.currency += r.currency
             result.exp += r.exp
             result.cheer += r.cheer
-          })
+          }, 'millipro/watchEvents/' + pid + '/' + k.videoId + '/' + k.date)
         })
       })
       return chain.then(function () { resolve() })
@@ -93,7 +100,7 @@ function syncGameRewards(gd, pid, db, result) {
               result.gameCount++
               result.currency += r.currency
               result.exp += r.exp
-            })
+            }, 'millipro/gameEvents/' + pid + '/' + gameId + '/' + ts)
           })
         })
       })
