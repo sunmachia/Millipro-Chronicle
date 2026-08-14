@@ -658,6 +658,168 @@ window.addEventListener('storage', function (e) {
   if (e.key === GAME_DATA_KEY) refreshPlayerStatus()
 })
 
+// ============================================================
+// 事務所（§10: 段階制・応援力で拡張・施設解放）
+// ============================================================
+
+// 施設の絵文字（OFFICE_FACILITY_NAMES と対応）
+var OFFICE_FACILITY_EMOJI = {
+  streamRoom: '📡',
+  recordBooth: '🎙️',
+  meetingRoom: '🗂️',
+  archiveRoom: '📚',
+  eventHall: '🏟️',
+  dreamFacility: '🌌',
+}
+
+// 事務所の建物イラスト（段階ごとの絵文字+雰囲気文言）
+var OFFICE_STAGE_VISUALS = [
+  { emoji: '🏠', note: 'こじんまりした始まりの事務所' },
+  { emoji: '🏢', note: '窓が増えて少し広くなった！' },
+  { emoji: '🏬', note: '看板が目立つ中規模オフィス' },
+  { emoji: '🎙️', note: '防音スタジオ完備の本格事務所' },
+  { emoji: '🏟️', note: 'イベントが開ける立派なホール' },
+  { emoji: '🌌', note: 'ミリプロの夢が詰まった大型施設' },
+]
+
+// ミリメンの状態（事務所にいるタレントの様子）
+var OFFICE_MEMBER_STATES = [
+  '配信準備中 📡',
+  '収録中 🎧',
+  '休憩中 ☕',
+  'グッズ確認中 🎁',
+  '打ち合わせ中 💬',
+  '練習中 🎤',
+  'お昼寝中 😴',
+  '作業中 💻',
+]
+
+function officeBuildingVisual(stage) {
+  var v = OFFICE_STAGE_VISUALS[stage - 1] || OFFICE_STAGE_VISUALS[0]
+  return v
+}
+
+// 事務所画面の描画
+function renderOfficeScreen() {
+  var gd = loadGameData()
+  var body = document.getElementById('office-body')
+  if (!body) return
+
+  var stageIdx = gd.office.stage - 1
+  var stage = OFFICE_STAGES[stageIdx]
+  var nextStage = OFFICE_STAGES[gd.office.stage]
+  var visual = officeBuildingVisual(gd.office.stage)
+  var cheer = gd.points.cheer
+
+  // 施設一覧
+  var facilityHtml = Object.keys(OFFICE_FACILITY_NAMES).map(function (id) {
+    var unlocked = gd.office.facilities[id]
+    var emoji = OFFICE_FACILITY_EMOJI[id] || '🚪'
+    var stageNo = OFFICE_STAGES.findIndex(function (s) { return s.unlocks.indexOf(id) >= 0 }) + 1
+    return (
+      '<div class="office-facility' + (unlocked ? '' : ' locked') + '">' +
+        '<span class="office-facility-emoji">' + emoji + '</span>' +
+        '<span class="office-facility-name">' + OFFICE_FACILITY_NAMES[id] + '</span>' +
+        (unlocked ? '' : '<span class="office-facility-lock">🔒 段階' + stageNo + '</span>') +
+      '</div>'
+    )
+  }).join('')
+
+  // ミリメンの様子（タレント名をランダムに表示）
+  var members = Object.keys(TALENTS).map(function (id) {
+    return { id: id, name: TALENTS[id].name }
+  })
+  // シャッフルして3人表示
+  for (var i = members.length - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1))
+    var tmp = members[i]
+    members[i] = members[j]
+    members[j] = tmp
+  }
+  var shownMembers = members.slice(0, 3).map(function (m) {
+    var st = OFFICE_MEMBER_STATES[Math.floor(Math.random() * OFFICE_MEMBER_STATES.length)]
+    return (
+      '<div class="office-member">' +
+        '<img class="office-member-img" src="images/talents/' + m.id + '.webp" alt="' + m.name + '">' +
+        '<span class="office-member-name">' + m.name + '</span>' +
+        '<span class="office-member-state">' + st + '</span>' +
+      '</div>'
+    )
+  }).join('')
+
+  // 拡張セクション
+  var upgradeHtml = ''
+  if (nextStage) {
+    var canUpgrade = cheer >= nextStage.cost
+    upgradeHtml =
+      '<div class="office-upgrade">' +
+        '<div class="office-upgrade-head">次の段階: ' + nextStage.name + '</div>' +
+        '<div class="office-upgrade-unlocks">' + nextStage.unlocks.map(function (id) {
+          return '<span class="office-unlock-chip">' + (OFFICE_FACILITY_EMOJI[id] || '') + ' ' + OFFICE_FACILITY_NAMES[id] + '</span>'
+        }).join('') + '</div>' +
+        '<div class="office-upgrade-cost">📣 応援力 ' + nextStage.cost + '</div>' +
+        '<div class="office-upgrade-progress"><div class="office-upgrade-fill" style="width:' + Math.min(100, Math.round(cheer / nextStage.cost * 100)) + '%"></div></div>' +
+        '<div class="office-upgrade-have">所持: 📣 ' + cheer + '</div>' +
+        '<button class="office-upgrade-btn' + (canUpgrade ? '' : ' disabled') + '" id="office-upgrade-btn"' + (canUpgrade ? '' : ' disabled') + '>' +
+          (canUpgrade ? '🏗️ 拡張する' : '応援力が足りません') +
+        '</button>' +
+      '</div>'
+  } else {
+    upgradeHtml =
+      '<div class="office-upgrade max">' +
+        '<div class="office-upgrade-head">🌟 事務所は最上段階です！</div>' +
+        '<div class="office-upgrade-unlocks">ミリプロの夢はここに集まる</div>' +
+      '</div>'
+  }
+
+  body.innerHTML =
+    '<div class="office-visual">' +
+      '<div class="office-building">' + visual.emoji + '</div>' +
+      '<div class="office-stage-name">' + stage.name + '</div>' +
+      '<div class="office-stage-note">' + visual.note + '</div>' +
+    '</div>' +
+
+    '<div class="office-section-title">📣 応援力（事務所の拡張に使用）</div>' +
+    '<div class="office-cheer">' + cheer + '</div>' +
+
+    '<div class="office-section-title">🏛️ 施設</div>' +
+    '<div class="office-facility-grid">' + facilityHtml + '</div>' +
+
+    upgradeHtml +
+
+    '<div class="office-section-title">ミリメンの様子</div>' +
+    '<div class="office-members">' + shownMembers + '</div>'
+
+  // 拡張ボタン
+  var upBtn = document.getElementById('office-upgrade-btn')
+  if (upBtn) {
+    upBtn.addEventListener('click', function () {
+      var gdNow = loadGameData()
+      var next = OFFICE_STAGES[gdNow.office.stage]
+      if (!next || gdNow.points.cheer < next.cost) return
+      gdNow.points.cheer -= next.cost
+      gdNow.office.stage++
+      next.unlocks.forEach(function (id) {
+        gdNow.office.facilities[id] = true
+      })
+      saveGameData(gdNow)
+      refreshPlayerStatus()
+      renderOfficeScreen()
+      playTapSound()
+    })
+  }
+}
+
+// 効果音（タップ音を再利用）
+function playTapSound() {
+  var se = document.getElementById('tap-se')
+  var settings = getSettings()
+  if (se && settings.seEnabled) {
+    se.currentTime = 0
+    se.play().catch(function () {})
+  }
+}
+
 // 設定画面のイベントリスナー
 ;(function () {
   // 名前入力
@@ -786,6 +948,11 @@ window.addEventListener('storage', function (e) {
       openPopup('popup-setting')
     },
     bloom: function () { alert('Milli Bloomは準備中です') },
+    office: function () {
+      closePC()
+      renderOfficeScreen()
+      openPopup('popup-office')
+    },
     dungeon: function () {
       closePC()
       window.open('dungeon.html', '_blank')
