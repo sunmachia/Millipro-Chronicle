@@ -1444,6 +1444,129 @@ body{
   display: none !important;
 }
 
+/* ========== クエスト（日替わり・週替わり） ========== */
+.quest-section-title {
+  font-size: 13px;
+  font-weight: bold;
+  color: #6d5bb8;
+  margin: 14px 0 8px;
+  padding-bottom: 4px;
+  border-bottom: 2px solid #efe9ff;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.quest-reset {
+  font-size: 10px;
+  font-weight: normal;
+  color: #bbb;
+}
+
+.quest-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.quest-card {
+  background: #f8f6ff;
+  border: 1px solid #e6deff;
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+.quest-card.done {
+  border-color: #c9f0c9;
+  background: #f3fbf3;
+}
+
+.quest-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.quest-name {
+  font-size: 13px;
+  font-weight: bold;
+  color: #444;
+}
+
+.quest-desc {
+  font-size: 11px;
+  color: #999;
+  margin-top: 2px;
+}
+
+.quest-progress {
+  margin-top: 8px;
+  height: 8px;
+  background: #eee;
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.quest-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #6d5bb8, #9a8be0);
+  border-radius: 99px;
+  transition: width 0.3s;
+}
+
+.quest-card.done .quest-progress-fill {
+  background: linear-gradient(90deg, #4caf50, #8bc34a);
+}
+
+.quest-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 6px;
+  font-size: 11px;
+}
+
+.quest-count {
+  color: #6d5bb8;
+  font-weight: bold;
+}
+
+.quest-reward {
+  color: #ff9f1c;
+  font-weight: bold;
+}
+
+.quest-claim-btn {
+  background: linear-gradient(135deg, #ff9f1c, #ffc94d);
+  color: #fff;
+  border: none;
+  border-radius: 99px;
+  padding: 5px 12px;
+  font-size: 11px;
+  font-weight: bold;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.quest-claim-btn:hover {
+  opacity: 0.85;
+}
+
+.quest-status.claimed {
+  font-size: 11px;
+  font-weight: bold;
+  color: #4caf50;
+  white-space: nowrap;
+}
+
+.quest-summary {
+  margin-top: 14px;
+  text-align: center;
+  font-size: 11px;
+  color: #bbb;
+}
+
 /* ========== プレイヤー設定画面 ========== */
 #setup-screen {
   position: fixed;

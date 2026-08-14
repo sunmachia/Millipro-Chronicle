@@ -820,6 +820,91 @@ function playTapSound() {
   }
 }
 
+// ============================================================
+// クエスト（§14: 日替わり・週替わり・報酬受け取り式）
+// ============================================================
+
+// 残り時間表示（次の日替わりまで）
+function questResetLabel(gd) {
+  var d = new Date()
+  var end = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1, 0, 0, 0)
+  var diff = Math.max(0, end - d)
+  var h = Math.floor(diff / 3600000)
+  var m = Math.floor((diff % 3600000) / 60000)
+  return 'あと ' + h + '時間' + (m > 0 ? m + '分' : '')
+}
+
+function renderQuestsScreen() {
+  var gd = loadGameData()
+  var body = document.getElementById('quests-body')
+  if (!body) return
+
+  rollQuests(gd)
+  saveGameData(gd)
+
+  function questCard(def, kind, q) {
+    var done = q.done.indexOf(def.id) >= 0
+    var claimed = (q.claimed || []).indexOf(def.id) >= 0
+    var progress = q.progress[def.progressKey] || 0
+    var pct = Math.min(100, Math.round(progress / def.target * 100))
+    var statusHtml = ''
+    if (claimed) {
+      statusHtml = '<div class="quest-status claimed">✓ 受取済み</div>'
+    } else if (done) {
+      statusHtml = '<button class="quest-claim-btn" data-kind="' + kind + '" data-id="' + def.id + '">🎁 報酬を受け取る</button>'
+    }
+    return (
+      '<div class="quest-card' + (done ? ' done' : '') + '">' +
+        '<div class="quest-card-top">' +
+          '<span class="quest-name">' + def.name + '</span>' +
+          statusHtml +
+        '</div>' +
+        '<div class="quest-desc">' + def.desc + '</div>' +
+        '<div class="quest-progress"><div class="quest-progress-fill" style="width:' + pct + '%"></div></div>' +
+        '<div class="quest-meta">' +
+          '<span class="quest-count">' + Math.min(progress, def.target) + ' / ' + def.target + '</span>' +
+          '<span class="quest-reward">💰 ' + def.currency + ' / ⭐ EXP ' + def.exp + '</span>' +
+        '</div>' +
+      '</div>'
+    )
+  }
+
+  var dailyHtml = DAILY_QUESTS.map(function (def) {
+    return questCard(def, 'daily', gd.quests.daily)
+  }).join('')
+
+  var weeklyHtml = WEEKLY_QUESTS.map(function (def) {
+    return questCard(def, 'weekly', gd.quests.weekly)
+  }).join('')
+
+  var dailyDone = gd.quests.daily.done.length
+  var weeklyDone = gd.quests.weekly.done.length
+
+  body.innerHTML =
+    '<div class="quest-section-title">日替わりクエスト <span class="quest-reset">' + questResetLabel(gd) + ' リセット</span></div>' +
+    '<div class="quest-list">' + dailyHtml + '</div>' +
+    '<div class="quest-section-title">週替わりクエスト <span class="quest-reset">月曜リセット</span></div>' +
+    '<div class="quest-list">' + weeklyHtml + '</div>' +
+    '<div class="quest-summary">達成: 日替わり ' + dailyDone + '/' + DAILY_QUESTS.length +
+    ' ・ 週替わり ' + weeklyDone + '/' + WEEKLY_QUESTS.length + '</div>'
+
+  // 報酬受け取り
+  body.querySelectorAll('.quest-claim-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var gdNow = loadGameData()
+      var reward = claimQuestRewards(gdNow, btn.dataset.kind)
+      if (!reward) return
+      gdNow.currency += reward.currency
+      var lv = addExp(gdNow, reward.exp)
+      saveGameData(gdNow)
+      refreshPlayerStatus()
+      renderQuestsScreen()
+      playTapSound()
+      alert('🎁 クエスト報酬を受け取りました！ 💰' + reward.currency + ' / EXP ' + reward.exp + (lv.leveledUp ? '（レベルアップ！）' : ''))
+    })
+  })
+}
+
 // 設定画面のイベントリスナー
 ;(function () {
   // 名前入力
@@ -950,8 +1035,17 @@ function playTapSound() {
     bloom: function () { alert('Milli Bloomは準備中です') },
     office: function () {
       closePC()
+      // クエスト進行（事務所訪問）
+      var gdVisit = loadGameData()
+      questAddProgress(gdVisit, 'officeVisits')
+      saveGameData(gdVisit)
       renderOfficeScreen()
       openPopup('popup-office')
+    },
+    quests: function () {
+      closePC()
+      renderQuestsScreen()
+      openPopup('popup-quests')
     },
     dungeon: function () {
       closePC()

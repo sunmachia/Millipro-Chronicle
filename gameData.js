@@ -5,7 +5,7 @@
 // ============================================================
 
 const GAME_DATA_KEY = 'millipro_gamedata'
-const GAME_DATA_VERSION = 2
+const GAME_DATA_VERSION = 3
 
 // ---- 定数・バランステーブル（企画書 Ver.0.4 初期案）----
 
@@ -129,7 +129,7 @@ function defaultGameData() {
     zukan: { quotes: {}, streams: {}, trivia: {}, history: {}, memoryCards: {} },
     garden: { areas: {} },
     dungeon: { attempts: [] },
-    quests: { daily: { date: null, done: [] }, weekly: { week: null, done: [] } },
+    quests: { daily: { date: null, done: [], claimed: [], progress: {} }, weekly: { week: null, done: [], claimed: [], progress: {} } },
     memoryShards: [],
     stats: { videosWatched: 0, dungeonClears: 0, artworksSold: 0, galleryReactions: 0 },
     createdAt: Date.now(),
@@ -152,6 +152,20 @@ function migrateGameData(data) {
   Object.keys(base).forEach(function (k) {
     if (data[k] !== undefined) base[k] = data[k]
   })
+  // quests のネスト構造を新スキーマに統合（progress / claimed 追加）
+  if (data.quests && typeof data.quests === 'object') {
+    if (!base.quests) base.quests = defaultGameData().quests
+    ;['daily', 'weekly'].forEach(function (kind) {
+      var old = data.quests[kind]
+      var cur = base.quests[kind]
+      if (old && typeof old === 'object') {
+        if (old.date !== undefined) cur.date = old.date
+        if (old.week !== undefined) cur.week = old.week
+        if (Array.isArray(old.done)) cur.done = old.done
+        if (Array.isArray(old.claimed)) cur.claimed = old.claimed
+      }
+    })
+  }
   base.version = GAME_DATA_VERSION
   return base
 }
@@ -234,4 +248,106 @@ function dungeonReward(rank, won) {
   var r = DUNGEON_REWARDS[rank] || DUNGEON_REWARDS[1]
   if (won) return { currency: r.currency, exp: r.exp, cheer: r.cheer }
   return { currency: Math.round(r.currency * 0.1), exp: 0, cheer: 0 } // 敗北時はわずかな通貨のみ
+}
+
+// ---- クエスト（§14: 日替わり・週替わり）----
+
+// クエスト定義
+// type: daily / weekly / progressKey: 進行をカウントするキー（questAddProgress で進む）
+const DAILY_QUESTS = [
+  { id: 'dungeon_try', name: 'ダンジョンに挑戦', desc: '配信ダンジョンに挑戦しよう', progressKey: 'dungeonTries', target: 1, currency: 50, exp: 30 },
+  { id: 'office_visit', name: '事務所を訪れる', desc: '事務所をのぞいてみよう', progressKey: 'officeVisits', target: 1, currency: 50, exp: 30 },
+  { id: 'currency_earn', name: '通貨を稼ぐ', desc: 'ダンジョン報酬などで通貨を獲得', progressKey: 'currencyEarned', target: 100, currency: 50, exp: 30 },
+]
+
+const WEEKLY_QUESTS = [
+  { id: 'dungeon_clear', name: 'ダンジョンを3回クリア', desc: '配信ダンジョンで勝利を重ねよう', progressKey: 'dungeonClears', target: 3, currency: 200, exp: 100 },
+  { id: 'cheer_gain', name: '応援力を300集める', desc: 'ダンジョン報酬などで応援力を獲得', progressKey: 'cheerGained', target: 300, currency: 200, exp: 100 },
+]
+
+// 今日の日付キー (YYYY-MM-DD、ローカル時刻)
+function todayKey() {
+  var d = new Date()
+  var mm = String(d.getMonth() + 1).padStart(2, '0')
+  var dd = String(d.getDate()).padStart(2, '0')
+  return d.getFullYear() + '-' + mm + '-' + dd
+}
+
+// 今週の週キー（月曜始まりの週番号）
+function weekKey() {
+  var d = new Date()
+  var day = d.getDay() || 7
+  var monday = new Date(d.getFullYear(), d.getMonth(), d.getDate() - day + 1)
+  var mm = String(monday.getMonth() + 1).padStart(2, '0')
+  var dd = String(monday.getDate()).padStart(2, '0')
+  return monday.getFullYear() + '-' + mm + '-' + dd
+}
+
+// クエストのリセットチェック（日替わり・週替わり）
+function rollQuests(data) {
+  if (!data.quests) data.quests = { daily: { date: null, done: [], claimed: [], progress: {} }, weekly: { week: null, done: [], claimed: [], progress: {} } }
+  var tk = todayKey()
+  if (data.quests.daily.date !== tk) {
+    data.quests.daily.date = tk
+    data.quests.daily.done = []
+    data.quests.daily.progress = {}
+  }
+  var wk = weekKey()
+  if (data.quests.weekly.week !== wk) {
+    data.quests.weekly.week = wk
+    data.quests.weekly.done = []
+    data.quests.weekly.progress = {}
+  }
+}
+
+// クエスト進行を加算（進行フック: ダンジョン挑戦/クリア、事務所訪問、報酬獲得 等）
+// 戻り値: { daily: 完了になった数, weekly: 完了になった数 }
+function questAddProgress(data, progressKey, amount) {
+  rollQuests(data)
+  var newlyDone = 0
+  if (typeof progressKey === 'string') progressKey = [progressKey]
+
+  progressKey.forEach(function (key) {
+    ;['daily', 'weekly'].forEach(function (kind) {
+      var q = data.quests[kind]
+      if (!q.progress[key]) q.progress[key] = 0
+      q.progress[key] += amount || 1
+    })
+  })
+
+  // 完了判定（クリアしたものを done に追加）
+  ;['daily', 'weekly'].forEach(function (kind) {
+    var defs = kind === 'daily' ? DAILY_QUESTS : WEEKLY_QUESTS
+    var q = data.quests[kind]
+    defs.forEach(function (def) {
+      if (q.done.indexOf(def.id) >= 0) return
+      var p = q.progress[def.progressKey] || 0
+      if (p >= def.target) {
+        q.done.push(def.id)
+        newlyDone++
+      }
+    })
+  })
+  return newlyDone
+}
+
+// クエスト報酬を受け取り（done 一覧から未受取分を確認し、受取済みフラグを付ける）
+// 戻り値: { currency, exp } の合計。受け取れるものが無ければ null
+function claimQuestRewards(data, kind) {
+  rollQuests(data)
+  var defs = kind === 'daily' ? DAILY_QUESTS : WEEKLY_QUESTS
+  var q = data.quests[kind]
+  if (!q.claimed) q.claimed = []
+
+  var total = { currency: 0, exp: 0 }
+  var any = false
+  defs.forEach(function (def) {
+    if (q.done.indexOf(def.id) >= 0 && q.claimed.indexOf(def.id) < 0) {
+      total.currency += def.currency
+      total.exp += def.exp
+      q.claimed.push(def.id)
+      any = true
+    }
+  })
+  return any ? total : null
 }
