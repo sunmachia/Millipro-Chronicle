@@ -15,12 +15,14 @@ const EXTERNAL_REWARD = {
 const GAME_CLAIM_WINDOW_MS = 60 * 60 * 1000
 
 // 受取済みマーカーを transaction で書き、二重付与を防ぐ
+// メモ: RTDB の transaction は更新関数が undefined を返すと中断される。
+// 同じ参照を返す場合は中断されず committed になるため、必ず undefined で中断する
 // 戻り値: Promise<boolean>（付与できたか）
 function claimMarkerOnce(path, onGranted) {
   return new Promise(function (resolve) {
     var ref = firebase.database().ref(path)
     ref.transaction(function (current) {
-      if (current) return current // 既に受取済み
+      if (current) return undefined // 既に受取済み → 中断
       return { grantedAt: Date.now() }
     }, function (err, committed) {
       if (err) {

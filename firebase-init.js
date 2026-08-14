@@ -1,11 +1,20 @@
 // Firebase 初期化（config 未設定なら何もしない）
+// config 変数名は Firebase コンソール貼り付け時の firebaseConfig と、
+// ハンドオフ資料記載の FIREBASE_CONFIG のどちらでも受け付ける
 var firebaseReady = false
+
+function getFirebaseConfig() {
+  if (typeof FIREBASE_CONFIG !== 'undefined' && FIREBASE_CONFIG) return FIREBASE_CONFIG
+  if (typeof firebaseConfig !== 'undefined' && firebaseConfig) return firebaseConfig
+  return null
+}
 
 function initFirebase() {
   if (firebaseReady || typeof firebase === 'undefined') return
-  if (!FIREBASE_CONFIG || !FIREBASE_CONFIG.apiKey || !FIREBASE_CONFIG.databaseURL) return
+  var cfg = getFirebaseConfig()
+  if (!cfg || !cfg.apiKey || !cfg.databaseURL) return
   try {
-    firebase.initializeApp(FIREBASE_CONFIG)
+    firebase.initializeApp(cfg)
     firebaseReady = true
   } catch (e) {
     console.warn('Firebase init failed:', e)
