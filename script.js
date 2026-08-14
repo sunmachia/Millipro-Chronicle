@@ -530,6 +530,9 @@ function showHomeScreen(data) {
   if (statusBar) statusBar.classList.remove('hidden')
   refreshPlayerStatus()
 
+  // 外部連携報酬の自動同期（config 設定済みのときだけ動作）
+  syncExternalRewards().catch(function () {})
+
   // スマホは最初に真ん中（スマホ）の位置にスクロール
   if (window.innerWidth < 768) {
     var deskSection = document.querySelector('.room-desk')
@@ -821,6 +824,84 @@ function playTapSound() {
 }
 
 // ============================================================
+// 外部連携（Milli Unishare / Milli Games）画面
+// ============================================================
+
+function renderExternalScreen() {
+  var body = document.getElementById('external-body')
+  if (!body) return
+
+  if (!firebaseAvailable()) {
+    body.innerHTML =
+      '<div class="external-notice">' +
+        '<div class="external-notice-icon">🔗</div>' +
+        '<p>Firebase の設定がまだです。</p>' +
+        '<p class="external-notice-sub">「連携ハンドオフ.md」§6 の手順に従い、<b>firebase-config.js</b> に config を設定すると、Milli Unishare（動画視聴）と Milli Games（ミニゲーム）の報酬が自動で届くようになります。</p>' +
+      '</div>'
+    return
+  }
+
+  var pid = getMilliproPlayerId()
+  if (!pid) {
+    body.innerHTML =
+      '<div class="external-notice">' +
+        '<div class="external-notice-icon">🙋</div>' +
+        '<p>プレイヤーIDがありません。設定をやり直してください。</p>' +
+      '</div>'
+    return
+  }
+
+  body.innerHTML =
+    '<div class="external-status">' +
+      '<div class="external-status-row"><span>プレイヤーID</span><b>' + pid + '</b></div>' +
+      '<div class="external-status-row"><span>連携サイト</span><b>Milli Unishare / Milli Games</b></div>' +
+      '<div class="external-status-row"><span>報酬</span><b>動画 15💰/8⭐/応援5 📣 ・ ゲーム 10💰/5⭐</b></div>' +
+    '</div>' +
+    '<div class="external-result" id="external-result"></div>' +
+    '<button class="external-sync-btn" id="external-sync-btn">🔄 同期する</button>'
+
+  document.getElementById('external-sync-btn').addEventListener('click', function () {
+    runExternalSync()
+  })
+}
+
+// 同期実行（外部報酬を付与して結果を表示）
+function runExternalSync() {
+  var resultEl = document.getElementById('external-result')
+  var btn = document.getElementById('external-sync-btn')
+  if (!resultEl || !btn) return
+  btn.disabled = true
+  btn.textContent = '同期中...'
+  resultEl.innerHTML = '<div class="external-syncing">同期しています...</div>'
+
+  syncExternalRewards().then(function (result) {
+    btn.disabled = false
+    btn.textContent = '🔄 同期する'
+    if (!result.available) {
+      resultEl.innerHTML = '<div class="external-syncing">Firebase が未設定のため同期できませんでした。</div>'
+      return
+    }
+    if (result.noPlayerId) {
+      resultEl.innerHTML = '<div class="external-syncing">プレイヤーIDが見つかりません。</div>'
+      return
+    }
+    if (result.videoCount === 0 && result.gameCount === 0) {
+      resultEl.innerHTML = '<div class="external-syncing">新しい報酬はありませんでした。</div>'
+      return
+    }
+    var lines =
+      '動画視聴報酬 ' + result.videoCount + '件' +
+      (result.gameCount > 0 ? ' ・ ミニゲーム報酬 ' + result.gameCount + '件' : '') +
+      ' を受け取りました！'
+    var html = '<div class="external-ok">🎉 ' + lines + '</div>'
+    html += '<div class="external-ok-detail">💰 +' + result.currency + ' / ⭐ +' + result.exp + (result.cheer > 0 ? ' / 📣 +' + result.cheer : '') + '</div>'
+    if (result.leveledUp) html += '<div class="external-ok-detail">🎊 レベルアップ！ 現在 Lv.' + result.newLevel + '</div>'
+    resultEl.innerHTML = html
+    refreshPlayerStatus()
+  })
+}
+
+// ============================================================
 // クエスト（§14: 日替わり・週替わり・報酬受け取り式）
 // ============================================================
 
@@ -1046,6 +1127,11 @@ function renderQuestsScreen() {
       closePC()
       renderQuestsScreen()
       openPopup('popup-quests')
+    },
+    external: function () {
+      closePC()
+      renderExternalScreen()
+      openPopup('popup-external')
     },
     dungeon: function () {
       closePC()

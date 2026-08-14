@@ -118,6 +118,17 @@
   </div>
 </div>
 
+<!-- 外部連携 -->
+<div class="popup-overlay hidden" id="popup-external">
+  <div class="popup-content popup-content-wide">
+    <div class="popup-header">🔗 外部連携</div>
+    <div class="popup-body" id="external-body"></div>
+    <div class="popup-footer">
+      <button class="popup-close-btn">閉じる</button>
+    </div>
+  </div>
+</div>
+
 <div id="home-screen" class="hidden">
   <!-- プレイヤーステータスバー -->
   <div id="player-status-bar" class="player-status-bar hidden">
@@ -289,6 +300,10 @@
           <div class="pc-app-icon pc-app-emoji">📋</div>
           <span class="pc-app-label">クエスト</span>
         </div>
+        <div class="pc-app" data-app="external">
+          <div class="pc-app-icon pc-app-emoji">🔗</div>
+          <span class="pc-app-label">連携</span>
+        </div>
       </div>
       <div class="pc-divider">━━━ ゲーム ━━━</div>
       <div class="pc-apps-grid">
@@ -441,6 +456,12 @@
 <audio id="tap-se" src="musics/sound effects/tap to start.mp3" preload="auto"></audio>
 <script src="pwa.js"></script>
 <script src="gameData.js"></script>
+<!-- 外部連携（Milli Unishare / Milli Games）: config 未設定なら無効化される -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script src="firebase-init.js"></script>
+<script src="external.js"></script>
 <script src="script.js"></script>
 </body>
 </html>

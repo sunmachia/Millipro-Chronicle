@@ -1567,6 +1567,95 @@ body{
   color: #bbb;
 }
 
+/* ========== 外部連携（Unishare / Games） ========== */
+.external-notice {
+  text-align: center;
+  padding: 24px 12px;
+}
+
+.external-notice-icon {
+  font-size: 44px;
+  margin-bottom: 10px;
+}
+
+.external-notice p {
+  font-size: 13px;
+  font-weight: bold;
+  color: #555;
+}
+
+.external-notice-sub {
+  font-size: 11px !important;
+  font-weight: normal !important;
+  color: #999;
+  line-height: 1.7;
+  margin-top: 6px;
+}
+
+.external-status {
+  background: #f8f6ff;
+  border: 1px solid #e6deff;
+  border-radius: 12px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+}
+
+.external-status-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  padding: 4px 0;
+  color: #777;
+}
+
+.external-status-row b {
+  color: #6d5bb8;
+}
+
+.external-sync-btn {
+  display: block;
+  width: 100%;
+  background: linear-gradient(135deg, #6d5bb8, #8b7fd4);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 12px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.external-sync-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.external-result {
+  margin-bottom: 12px;
+}
+
+.external-syncing {
+  text-align: center;
+  font-size: 12px;
+  color: #999;
+  padding: 8px 0;
+}
+
+.external-ok {
+  text-align: center;
+  font-size: 13px;
+  font-weight: bold;
+  color: #4caf50;
+  padding: 8px 0 2px;
+}
+
+.external-ok-detail {
+  text-align: center;
+  font-size: 12px;
+  color: #6d5bb8;
+  padding: 2px 0;
+}
+
 /* ========== プレイヤー設定画面 ========== */
 #setup-screen {
   position: fixed;

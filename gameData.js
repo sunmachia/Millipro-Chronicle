@@ -5,7 +5,7 @@
 // ============================================================
 
 const GAME_DATA_KEY = 'millipro_gamedata'
-const GAME_DATA_VERSION = 3
+const GAME_DATA_VERSION = 4
 
 // ---- 定数・バランステーブル（企画書 Ver.0.4 初期案）----
 
@@ -134,6 +134,7 @@ function defaultGameData() {
     quests: { daily: { date: null, done: [], claimed: [], progress: {} }, weekly: { week: null, done: [], claimed: [], progress: {} } },
     memoryShards: [],
     stats: { videosWatched: 0, dungeonClears: 0, artworksSold: 0, galleryReactions: 0 },
+    externalRewards: { gameLastClaimed: {} },
     createdAt: Date.now(),
     updatedAt: Date.now(),
   }
@@ -167,6 +168,11 @@ function migrateGameData(data) {
         if (Array.isArray(old.claimed)) cur.claimed = old.claimed
       }
     })
+  }
+  // externalRewards のネスト統合（ゲームの受取履歴を維持）
+  if (data.externalRewards && typeof data.externalRewards === 'object') {
+    if (!base.externalRewards) base.externalRewards = defaultGameData().externalRewards
+    if (data.externalRewards.gameLastClaimed) base.externalRewards.gameLastClaimed = data.externalRewards.gameLastClaimed
   }
   base.version = GAME_DATA_VERSION
   return base
@@ -260,6 +266,7 @@ const DAILY_QUESTS = [
   { id: 'dungeon_try', name: 'ダンジョンに挑戦', desc: '配信ダンジョンに挑戦しよう', progressKey: 'dungeonTries', target: 1, currency: 50, exp: 30 },
   { id: 'office_visit', name: '事務所を訪れる', desc: '事務所をのぞいてみよう', progressKey: 'officeVisits', target: 1, currency: 50, exp: 30 },
   { id: 'currency_earn', name: '通貨を稼ぐ', desc: 'ダンジョン報酬などで通貨を獲得', progressKey: 'currencyEarned', target: 100, currency: 50, exp: 30 },
+  { id: 'video_watch', name: '動画を1本視聴', desc: 'Milli Unishare で動画を見よう', progressKey: 'videosWatched', target: 1, currency: 50, exp: 30 },
 ]
 
 const WEEKLY_QUESTS = [
