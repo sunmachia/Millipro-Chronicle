@@ -31,11 +31,29 @@
     <div class="login-gate-title">🔐 ミリプロ・クロニクル</div>
     <div class="login-gate-sub">遊ぶにはアカウント連携（ログイン）が必要です</div>
     <div class="login-gate-note">Milli Unishare / ミニゲームと同じアカウントでログインすると、プレイヤーIDとゲームデータが全サイトで共有されます。</div>
-    <input class="external-input" id="login-gate-email" type="email" placeholder="メールアドレス" autocomplete="email">
-    <input class="external-input" id="login-gate-pass" type="password" placeholder="パスワード" autocomplete="current-password">
-    <div class="external-input-row">
+    <div class="auth-tabs">
+      <button class="auth-tab-btn active" id="gate-tab-login">ログイン</button>
+      <button class="auth-tab-btn" id="gate-tab-signup">新規登録</button>
+    </div>
+    <div id="gate-panel-login">
+      <input class="external-input" id="login-gate-email" type="email" placeholder="メールアドレス" autocomplete="email">
+      <div class="password-field">
+        <input class="external-input" id="login-gate-pass" type="password" placeholder="パスワード" autocomplete="current-password">
+        <button type="button" class="pass-toggle-btn" id="login-gate-pass-toggle">👁</button>
+      </div>
       <button class="external-auth-btn" id="login-gate-login-btn">ログイン</button>
-      <button class="external-auth-btn secondary" id="login-gate-signup-btn">新規作成</button>
+    </div>
+    <div id="gate-panel-signup" class="hidden">
+      <input class="external-input" id="signup-gate-email" type="email" placeholder="メールアドレス" autocomplete="email">
+      <div class="password-field">
+        <input class="external-input" id="signup-gate-pass" type="password" placeholder="パスワード（6文字以上）" autocomplete="new-password">
+        <button type="button" class="pass-toggle-btn" id="signup-gate-pass-toggle">👁</button>
+      </div>
+      <div class="password-field">
+        <input class="external-input" id="signup-gate-pass2" type="password" placeholder="パスワード（確認）" autocomplete="new-password">
+        <button type="button" class="pass-toggle-btn" id="signup-gate-pass2-toggle">👁</button>
+      </div>
+      <button class="external-auth-btn" id="login-gate-signup-btn">新規登録</button>
     </div>
     <div class="external-auth-msg" id="login-gate-msg"></div>
   </div>

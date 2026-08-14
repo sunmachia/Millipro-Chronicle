@@ -871,11 +871,29 @@ function renderExternalScreen() {
           '<div class="external-account-head">🔐 アカウント連携（全サイト共通ログイン）</div>' +
           '<div class="external-account-row"><span>連携ID</span><b>' + pid + '</b><button class="external-copy-btn" id="external-copy-btn">コピー</button></div>' +
           '<div class="external-account-note">Milli Unishare / ミニゲームでも同じアカウントでログインすると、プレイヤーIDが自動で統一されます。ログイン不要で使う場合は「連携ID」を各サイトに入力してください。</div>' +
-          '<input class="external-input" id="auth-email" type="email" placeholder="メールアドレス" autocomplete="email">' +
-          '<input class="external-input" id="auth-pass" type="password" placeholder="パスワード" autocomplete="current-password">' +
-          '<div class="external-input-row">' +
+          '<div class="auth-tabs">' +
+            '<button class="auth-tab-btn active" id="auth-tab-login">ログイン</button>' +
+            '<button class="auth-tab-btn" id="auth-tab-signup">新規登録</button>' +
+          '</div>' +
+          '<div id="auth-panel-login">' +
+            '<input class="external-input" id="auth-email" type="email" placeholder="メールアドレス" autocomplete="email">' +
+            '<div class="password-field">' +
+              '<input class="external-input" id="auth-pass" type="password" placeholder="パスワード" autocomplete="current-password">' +
+              '<button type="button" class="pass-toggle-btn" id="auth-pass-toggle">👁</button>' +
+            '</div>' +
             '<button class="external-auth-btn" id="auth-login-btn">ログイン</button>' +
-            '<button class="external-auth-btn secondary" id="auth-signup-btn">新規作成</button>' +
+          '</div>' +
+          '<div id="auth-panel-signup" class="hidden">' +
+            '<input class="external-input" id="auth2-email" type="email" placeholder="メールアドレス" autocomplete="email">' +
+            '<div class="password-field">' +
+              '<input class="external-input" id="auth2-pass" type="password" placeholder="パスワード（6文字以上）" autocomplete="new-password">' +
+              '<button type="button" class="pass-toggle-btn" id="auth2-pass-toggle">👁</button>' +
+            '</div>' +
+            '<div class="password-field">' +
+              '<input class="external-input" id="auth2-pass2" type="password" placeholder="パスワード（確認）" autocomplete="new-password">' +
+              '<button type="button" class="pass-toggle-btn" id="auth2-pass2-toggle">👁</button>' +
+            '</div>' +
+            '<button class="external-auth-btn" id="auth-signup-btn">新規登録</button>' +
           '</div>' +
           '<div class="external-auth-msg" id="auth-msg"></div>' +
         '</div>'
@@ -911,6 +929,16 @@ function renderExternalScreen() {
     loginBtn.addEventListener('click', function () { submitMilliproAuth('login') })
     signupBtn.addEventListener('click', function () { submitMilliproAuth('signup') })
   }
+  var tabLogin = document.getElementById('auth-tab-login')
+  var tabSignup = document.getElementById('auth-tab-signup')
+  if (tabLogin) tabLogin.addEventListener('click', function () { switchAuthTab('login', false) })
+  if (tabSignup) tabSignup.addEventListener('click', function () { switchAuthTab('signup', false) })
+  var tog1 = document.getElementById('auth-pass-toggle')
+  var tog2 = document.getElementById('auth2-pass-toggle')
+  var tog3 = document.getElementById('auth2-pass2-toggle')
+  if (tog1) tog1.addEventListener('click', function () { togglePassVisibility('auth-pass', 'auth-pass-toggle') })
+  if (tog2) tog2.addEventListener('click', function () { togglePassVisibility('auth2-pass', 'auth2-pass-toggle') })
+  if (tog3) tog3.addEventListener('click', function () { togglePassVisibility('auth2-pass2', 'auth2-pass2-toggle') })
   var logoutBtn = document.getElementById('external-logout-btn')
   if (logoutBtn) {
     logoutBtn.addEventListener('click', function () {
@@ -935,13 +963,32 @@ function copyMilliproPlayerId(pid) {
 }
 
 // ログイン / 新規作成の送信（gateMode ならログイン必須ゲートからの呼び出し）
+// フォームはログイン/新規登録でタブ分け（新規登録はパスワードを2回入力）
 function submitMilliproAuth(mode, gateMode) {
   var msg = document.getElementById(gateMode ? 'login-gate-msg' : 'auth-msg')
-  var email = document.getElementById(gateMode ? 'login-gate-email' : 'auth-email').value.trim()
-  var pass = document.getElementById(gateMode ? 'login-gate-pass' : 'auth-pass').value
+  var email, pass, pass2
+  if (gateMode) {
+    email = document.getElementById(mode === 'signup' ? 'signup-gate-email' : 'login-gate-email').value.trim()
+    pass = document.getElementById(mode === 'signup' ? 'signup-gate-pass' : 'login-gate-pass').value
+    pass2 = document.getElementById(mode === 'signup' ? 'signup-gate-pass2' : null)
+  } else {
+    email = document.getElementById(mode === 'signup' ? 'auth2-email' : 'auth-email').value.trim()
+    pass = document.getElementById(mode === 'signup' ? 'auth2-pass' : 'auth-pass').value
+    pass2 = document.getElementById(mode === 'signup' ? 'auth2-pass2' : null)
+  }
   if (!email || !pass) {
     msg.textContent = 'メールアドレスとパスワードを入力してください。'
     return
+  }
+  if (mode === 'signup') {
+    if (pass2 && pass !== pass2.value) {
+      msg.textContent = 'パスワードが一致しません。もう一度入力してください。'
+      return
+    }
+    if (pass.length < 6) {
+      msg.textContent = 'パスワードは6文字以上にしてください。'
+      return
+    }
   }
   msg.textContent = '処理中...'
   var p = mode === 'signup' ? milliproSignup(email, pass) : milliproLogin(email, pass)
@@ -962,6 +1009,29 @@ function submitMilliproAuth(mode, gateMode) {
   }).catch(function (e) {
     msg.textContent = e && e.message ? e.message : 'エラーが発生しました。'
   })
+}
+
+// ログイン / 新規登録のタブ切替（gateMode ならゲート、それ以外は連携画面）
+function switchAuthTab(tab, gateMode) {
+  var p = gateMode ? 'gate' : 'auth'
+  var loginPanel = document.getElementById(p + '-panel-login')
+  var signupPanel = document.getElementById(p + '-panel-signup')
+  var loginTab = document.getElementById(p + '-tab-login')
+  var signupTab = document.getElementById(p + '-tab-signup')
+  if (loginPanel) loginPanel.classList.toggle('hidden', tab !== 'login')
+  if (signupPanel) signupPanel.classList.toggle('hidden', tab !== 'signup')
+  if (loginTab) loginTab.classList.toggle('active', tab === 'login')
+  if (signupTab) signupTab.classList.toggle('active', tab === 'signup')
+}
+
+// パスワードの表示 / 非表示を切り替える
+function togglePassVisibility(inputId, btnId) {
+  var input = document.getElementById(inputId)
+  var btn = document.getElementById(btnId)
+  if (!input) return
+  var show = input.type === 'password'
+  input.type = show ? 'text' : 'password'
+  if (btn) btn.textContent = show ? '🙈' : '👁'
 }
 
 // ============================================================
@@ -1021,6 +1091,13 @@ var gateLoginBtn = document.getElementById('login-gate-login-btn')
 var gateSignupBtn = document.getElementById('login-gate-signup-btn')
 if (gateLoginBtn) gateLoginBtn.addEventListener('click', function () { submitMilliproAuth('login', true) })
 if (gateSignupBtn) gateSignupBtn.addEventListener('click', function () { submitMilliproAuth('signup', true) })
+var gateTabLogin = document.getElementById('gate-tab-login')
+var gateTabSignup = document.getElementById('gate-tab-signup')
+if (gateTabLogin) gateTabLogin.addEventListener('click', function () { switchAuthTab('login', true) })
+if (gateTabSignup) gateTabSignup.addEventListener('click', function () { switchAuthTab('signup', true) })
+document.getElementById('login-gate-pass-toggle').addEventListener('click', function () { togglePassVisibility('login-gate-pass', 'login-gate-pass-toggle') })
+document.getElementById('signup-gate-pass-toggle').addEventListener('click', function () { togglePassVisibility('signup-gate-pass', 'signup-gate-pass-toggle') })
+document.getElementById('signup-gate-pass2-toggle').addEventListener('click', function () { togglePassVisibility('signup-gate-pass2', 'signup-gate-pass2-toggle') })
 
 // 同期実行（外部報酬を付与して結果を表示）
 function runExternalSync() {
