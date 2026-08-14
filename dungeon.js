@@ -45,6 +45,12 @@ function dungeonRand(min, max) {
   return min + Math.floor(Math.random() * (max - min + 1))
 }
 
+// ---- 立ち絵: images/standing/<id>.png を使用。無ければ talents/<id>.webp へフォールバック ----
+function talentImg(id, cls) {
+  var onErr = "this.onerror=null;this.src='images/talents/" + id + ".webp';this.classList.add('portrait');"
+  return '<img class="' + (cls || '') + '" src="images/standing/' + id + '.png" alt="" loading="lazy" onerror="' + onErr + '">'
+}
+
 // ---- チャット生成 ----
 var FAN_NAMES = [
   'ミリリスA', 'こんぺいとう', '夜行バス推し', 'しろくま推し', 'あんこまる',
@@ -275,12 +281,12 @@ function renderSelectView() {
   if (!talentIds.length) talentIds = Object.keys(DUNGEON_TALENTS)
 
   html += '<div class="stage-sub">挑戦するタレントを選択してください</div>';
-  html += '<div class="talent-row">';
+  html += '<div class="talent-grid">';
   talentIds.forEach(function (id) {
     var t = DUNGEON_TALENTS[id]
     if (!t) return
     html += '<button class="talent-chip" data-talent="' + id + '">';
-    html += '<img src="images/talents/' + id + '.webp" alt="' + t.name + '">';
+    html += talentImg(id, '');
     html += '<span>' + t.name + '</span>';
     html += '</button>';
   });
@@ -379,25 +385,26 @@ function renderBattle() {
 
   var html = '<div class="battle-wrap" id="battle-wrap">'
   html += '<div class="battle-stage" id="battle-stage">'
+  html += '<div class="battle-floor"></div>'
 
-  // タレント
+  // タレント（立ち絵）
   html += '<div class="fighter">'
-  html += '<img class="fighter-avatar" src="images/talents/' + talentId + '.webp" alt="' + talent.name + '">'
+  html += '<div class="fighter-stand">' + talentImg(talentId, 'fighter-avatar') + '</div>'
   html += '<div class="fighter-name">' + talent.name + ' <span style="font-size:10px;color:#aaa">Lv.' + gd.level + '</span></div>'
   html += '<div class="hp-wrap"><div class="hp-fill talent-hp" id="hp-talent" style="width:' + (state.talentHp / state.talentMaxHp * 100) + '%"></div></div>'
   html += '<div class="hp-num">' + state.talentHp + ' / ' + state.talentMaxHp + '</div>'
-  html += '<div class="fighter-name" style="font-size:11px">攻 ' + stats.atk + ' 守 ' + stats.def + buff + '</div>'
+  html += '<div class="fighter-stats">⚔️' + stats.atk + ' 🛡️' + stats.def + buff + '</div>'
   html += '</div>'
 
   html += '<div class="vs-divider">VS</div>'
 
-  // ボス
+  // ボス（像）
   html += '<div class="fighter boss">'
-  html += '<div class="fighter-avatar" style="display:flex;align-items:center;justify-content:center;font-size:60px">' + boss.emoji + '</div>'
+  html += '<div class="boss-stand"><span class="boss-emoji">' + boss.emoji + '</span></div>'
   html += '<div class="fighter-name">★' + state.rank + ' ' + boss.name + '</div>'
   html += '<div class="hp-wrap"><div class="hp-fill boss-hp" id="hp-boss" style="width:' + (state.bossHp / boss.hp * 100) + '%"></div></div>'
   html += '<div class="hp-num">' + state.bossHp + ' / ' + boss.hp + '</div>'
-  html += '<div class="fighter-name" style="font-size:11px">攻 ' + boss.atk + ' 守 ' + boss.def + '</div>'
+  html += '<div class="fighter-stats">⚔️' + boss.atk + ' 🛡️' + boss.def + '</div>'
   html += '</div>'
 
   html += '</div>'

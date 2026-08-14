@@ -1,5 +1,5 @@
 /* ============================================================
-   配信ダンジョン（ライブ配信風） dungeon.html
+   配信ダンジョン（ライブ配信風・ダンジョンテーマ） dungeon.html
    ============================================================ */
 * {
   margin: 0;
@@ -9,19 +9,22 @@
 
 :root {
   --youtube-dark: #0f0f0f;
-  --youtube-panel: #1f1f1f;
-  --youtube-border: #303030;
-  --accent: #ff4d6d;
+  --dungeon-bg: #14101c;
+  --dungeon-wall: #221a2e;
+  --dungeon-stone: #2e2440;
+  --dungeon-line: #4a3d63;
+  --accent: #ff6b9d;
   --accent2: #ffd166;
+  --gold: #e8c97a;
   --text: #f1f1f1;
-  --text-dim: #aaaaaa;
+  --text-dim: #b5aac4;
   --hp-green: #2ecc71;
   --hp-red: #e74c3c;
 }
 
 html, body {
   height: 100%;
-  background: var(--youtube-dark);
+  background: var(--dungeon-bg);
   color: var(--text);
   font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic UI", "Meiryo", sans-serif;
   overflow: hidden;
@@ -37,8 +40,8 @@ html, body {
 .stream-header {
   height: 56px;
   flex-shrink: 0;
-  background: var(--youtube-panel);
-  border-bottom: 1px solid var(--youtube-border);
+  background: linear-gradient(180deg, #241c30, #1a1424);
+  border-bottom: 2px solid var(--dungeon-line);
   display: flex;
   align-items: center;
   padding: 0 12px;
@@ -133,9 +136,9 @@ html, body {
 .currency-chip {
   font-size: 13px;
   font-weight: bold;
-  color: #ffd166;
-  background: rgba(255,209,102,0.12);
-  border: 1px solid rgba(255,209,102,0.4);
+  color: var(--gold);
+  background: rgba(232,201,122,0.12);
+  border: 1px solid rgba(232,201,122,0.4);
   border-radius: 999px;
   padding: 4px 12px;
   white-space: nowrap;
@@ -152,21 +155,92 @@ html, body {
   flex: 1;
   min-width: 0;
   position: relative;
-  background: radial-gradient(ellipse at center, #1a1630 0%, #0d0b18 70%);
   overflow: hidden;
+  background: linear-gradient(180deg, #0e0a16 0%, #1a1326 60%, #241a2e 100%);
 }
 
+/* ---- ダンジョン背景（壁・影・松明） ---- */
+.dungeon-bg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.dungeon-wall {
+  position: absolute;
+  inset: 0;
+  /* 石壁テクスチャ */
+  background:
+    linear-gradient(135deg, rgba(255,255,255,0.025) 25%, transparent 25%, transparent 75%, rgba(255,255,255,0.025) 75%),
+    linear-gradient(135deg, rgba(255,255,255,0.015) 25%, transparent 25%, transparent 75%, rgba(255,255,255,0.015) 75%),
+    linear-gradient(180deg, #251b33 0%, #1c1428 60%, #150f20 100%);
+  background-size: 96px 96px, 96px 96px, 100% 100%;
+  background-position: 0 0, 48px 48px, 0 0;
+  box-shadow: inset 0 0 120px rgba(0,0,0,0.75);
+}
+
+.dungeon-shadows {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 50% 110%, rgba(0,0,0,0.55) 0%, transparent 55%),
+    radial-gradient(ellipse at 50% -10%, rgba(0,0,0,0.45) 0%, transparent 45%);
+}
+
+.torch {
+  position: absolute;
+  bottom: calc(22% + 60px);
+  font-size: 30px;
+  line-height: 1;
+  filter: drop-shadow(0 0 14px rgba(255,150,50,0.85));
+  animation: torchFlicker 0.7s ease-in-out infinite alternate;
+  z-index: 1;
+}
+
+.torch-left { left: 12px; }
+.torch-right { right: 12px; }
+
+.torch-glow {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 90px;
+  height: 90px;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle, rgba(255,150,50,0.28) 0%, transparent 65%);
+  border-radius: 50%;
+  animation: glowPulse 1.6s ease-in-out infinite;
+}
+
+@keyframes torchFlicker {
+  0%   { transform: translateY(0) scale(1) rotate(-2deg); opacity: 0.92; }
+  30%  { transform: translateY(-3px) scale(0.97) rotate(2deg); opacity: 1; }
+  60%  { transform: translateY(1px) scale(1.02) rotate(-1deg); opacity: 0.85; }
+  100% { transform: translateY(-2px) scale(1) rotate(1deg); opacity: 0.95; }
+}
+
+@keyframes glowPulse {
+  0%, 100% { opacity: 0.55; transform: translate(-50%, -50%) scale(0.92); }
+  50% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+}
+
+#stage-view {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+}
+
+/* ========== チャット ========== */
 .chat-area {
   width: 320px;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  background: var(--youtube-panel);
-  border-left: 1px solid var(--youtube-border);
+  background: #17121f;
+  border-left: 2px solid var(--dungeon-line);
   min-height: 0;
 }
 
-/* ========== チャット ========== */
 .chat-header {
   height: 40px;
   flex-shrink: 0;
@@ -174,7 +248,7 @@ html, body {
   align-items: center;
   justify-content: space-between;
   padding: 0 14px;
-  border-bottom: 1px solid var(--youtube-border);
+  border-bottom: 1px solid var(--dungeon-line);
   font-size: 13px;
   color: var(--text-dim);
 }
@@ -245,16 +319,16 @@ html, body {
   align-items: center;
   gap: 8px;
   padding: 8px 10px;
-  border-top: 1px solid var(--youtube-border);
+  border-top: 1px solid var(--dungeon-line);
 }
 
 .chat-input-bar input {
   flex: 1;
   min-width: 0;
   height: 36px;
-  border: 1px solid var(--youtube-border);
+  border: 1px solid var(--dungeon-line);
   border-radius: 999px;
-  background: #121212;
+  background: #0f0b16;
   color: var(--text);
   padding: 0 14px;
   font-size: 13px;
@@ -262,14 +336,14 @@ html, body {
 }
 
 .chat-input-bar input:focus {
-  border-color: var(--accent);
+  border-color: var(--accent2);
 }
 
 .chat-input-bar button {
   height: 36px;
   border: none;
   border-radius: 999px;
-  background: var(--accent);
+  background: linear-gradient(135deg, var(--accent), #c94f7c);
   color: #fff;
   font-size: 13px;
   font-weight: bold;
@@ -292,13 +366,16 @@ html, body {
   flex-direction: column;
   gap: 14px;
   align-items: center;
+  z-index: 2;
 }
 
 .stage-heading {
-  font-size: 16px;
+  font-size: 17px;
   font-weight: bold;
-  color: var(--text);
+  color: var(--gold);
+  letter-spacing: 0.06em;
   text-align: center;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.8), 0 0 18px rgba(232,201,122,0.25);
 }
 
 .stage-heading small {
@@ -306,49 +383,59 @@ html, body {
   font-size: 12px;
   color: var(--text-dim);
   font-weight: normal;
-  margin-top: 4px;
+  margin-top: 5px;
+  letter-spacing: 0.02em;
 }
 
+.stage-heading small b { color: var(--gold); }
+
+/* ボスカード（石版風） */
 .boss-grid {
   width: 100%;
-  max-width: 640px;
+  max-width: 660px;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
   gap: 12px;
 }
 
 .boss-card {
-  background: var(--youtube-panel);
-  border: 1px solid var(--youtube-border);
+  background: linear-gradient(165deg, #2b2138 0%, #221a30 100%);
+  border: 2px solid var(--dungeon-line);
   border-radius: 14px;
   padding: 14px;
   cursor: pointer;
-  transition: transform 0.15s, border-color 0.15s;
+  transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
   text-align: left;
   font-family: inherit;
   color: var(--text);
   position: relative;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 4px 14px rgba(0,0,0,0.45);
 }
 
 .boss-card:hover:not(:disabled) {
   transform: translateY(-3px);
-  border-color: var(--accent);
+  border-color: var(--gold);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 8px 20px rgba(232,201,122,0.12);
 }
 
 .boss-card:disabled {
-  opacity: 0.45;
+  opacity: 0.4;
   cursor: not-allowed;
+  filter: grayscale(0.5);
 }
 
 .boss-card-emoji {
   font-size: 42px;
   line-height: 1;
+  display: inline-block;
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5));
 }
 
 .boss-card-name {
   font-weight: bold;
   margin-top: 8px;
   font-size: 15px;
+  color: var(--gold);
 }
 
 .boss-card-desc {
@@ -356,6 +443,7 @@ html, body {
   color: var(--text-dim);
   margin-top: 4px;
   min-height: 2.6em;
+  line-height: 1.5;
 }
 
 .boss-card-meta {
@@ -389,22 +477,19 @@ html, body {
 }
 
 /* タレント選択 */
-.talent-row {
-  display: flex;
-  gap: 10px;
-  overflow-x: auto;
-  max-width: 640px;
+.talent-grid {
   width: 100%;
-  padding-bottom: 6px;
+  max-width: 660px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 10px;
 }
 
 .talent-chip {
-  flex-shrink: 0;
-  width: 76px;
-  background: var(--youtube-panel);
-  border: 1px solid var(--youtube-border);
+  background: linear-gradient(165deg, #2b2138 0%, #221a30 100%);
+  border: 2px solid var(--dungeon-line);
   border-radius: 14px;
-  padding: 10px 6px;
+  padding: 10px 6px 8px;
   cursor: pointer;
   display: flex;
   flex-direction: column;
@@ -412,7 +497,8 @@ html, body {
   gap: 6px;
   font-family: inherit;
   color: var(--text);
-  transition: border-color 0.15s, transform 0.15s;
+  transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 4px 12px rgba(0,0,0,0.4);
 }
 
 .talent-chip:hover {
@@ -420,16 +506,23 @@ html, body {
   transform: translateY(-2px);
 }
 
+.talent-chip.selected {
+  border-color: var(--gold);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 0 14px rgba(232,201,122,0.35);
+}
+
 .talent-chip img {
-  width: 52px;
-  height: 52px;
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
   object-fit: cover;
+  border: 2px solid rgba(232,201,122,0.35);
+  box-shadow: 0 3px 10px rgba(0,0,0,0.5);
 }
 
 .talent-chip span {
-  font-size: 10px;
-  max-width: 70px;
+  font-size: 11px;
+  max-width: 90px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -448,7 +541,7 @@ html, body {
 }
 
 .attempt-note b {
-  color: var(--accent2);
+  color: var(--gold);
 }
 
 /* ========== バトル ========== */
@@ -457,19 +550,42 @@ html, body {
   inset: 0;
   display: flex;
   flex-direction: column;
-  padding: 14px 18px 12px;
-  gap: 10px;
+  padding: 10px 14px 10px;
+  gap: 8px;
+  z-index: 2;
 }
 
-/* ステージ（タレントVSボス） */
+/* ステージ（スタジアム的な窪み・石畳床） */
 .battle-stage {
   flex: 1;
   min-height: 0;
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
-  gap: 8px;
+  gap: 6px;
   position: relative;
+  border: 3px solid var(--dungeon-line);
+  border-radius: 16px;
+  overflow: hidden;
+  background: linear-gradient(180deg, rgba(20,14,30,0.55) 0%, rgba(16,11,24,0.7) 60%, rgba(10,7,16,0.85) 100%);
+  box-shadow: inset 0 0 60px rgba(0,0,0,0.6), inset 0 -24px 50px rgba(0,0,0,0.5);
+}
+
+/* 石畳の床 */
+.battle-floor {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 32%;
+  background:
+    linear-gradient(135deg, rgba(255,255,255,0.02) 25%, transparent 25%, transparent 75%, rgba(255,255,255,0.02) 75%),
+    linear-gradient(135deg, rgba(255,255,255,0.02) 25%, transparent 25%, transparent 75%, rgba(255,255,255,0.02) 75%),
+    linear-gradient(180deg, #3a2f52 0%, #2c2440 100%);
+  background-size: 60px 60px, 60px 60px, 100% 100%;
+  background-position: 0 0, 30px 30px, 0 0;
+  border-top: 2px solid rgba(232,201,122,0.25);
+  box-shadow: inset 0 8px 18px rgba(0,0,0,0.4);
 }
 
 .battle-stage.shake {
@@ -485,32 +601,100 @@ html, body {
 }
 
 .fighter {
-  width: 38%;
+  width: 40%;
   height: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
+  justify-content: flex-end;
+  gap: 4px;
   text-align: center;
   position: relative;
   z-index: 2;
+  padding-bottom: calc(32% + 2px);
+}
+
+/* 立ち絵（タレント） */
+.fighter-stand {
+  position: absolute;
+  left: 50%;
+  bottom: calc(32% - 6px);
+  transform: translateX(-50%);
+  width: 62%;
+  height: calc(96% - 92px);
+  max-height: 340px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 1;
 }
 
 .fighter-avatar {
-  width: min(46%, 150px);
-  aspect-ratio: 1;
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: 100%;
+  object-fit: contain;
+  animation: floaty 3.2s ease-in-out infinite;
+}
+
+/* 立ち絵の下影 */
+.fighter-stand::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -6px;
+  width: 74%;
+  height: 16px;
+  transform: translateX(-50%);
+  background: radial-gradient(ellipse at center, rgba(0,0,0,0.55) 0%, transparent 70%);
+  border-radius: 50%;
+}
+
+/* 未配置時のフォールバック（丸顔ポートレート） */
+.fighter-avatar.portrait {
+  width: 120px;
+  height: 120px;
+  min-height: 120px;
   object-fit: cover;
   border-radius: 50%;
   border: 3px solid var(--accent);
-  box-shadow: 0 0 30px rgba(255,77,109,0.35);
-  animation: floaty 3s ease-in-out infinite;
+  box-shadow: 0 0 30px rgba(255,107,157,0.4);
+  margin-bottom: 18px;
 }
 
-.fighter.boss .fighter-avatar {
-  border-color: #ff5252;
-  box-shadow: 0 0 34px rgba(255,60,60,0.45);
+/* ボス（エモジ像 + 光背） */
+.boss-stand {
+  position: absolute;
+  left: 50%;
+  bottom: calc(32% - 6px);
+  transform: translateX(-50%);
+  width: 58%;
+  height: calc(96% - 92px);
+  max-height: 340px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 1;
+}
+
+.boss-stand::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 6%;
+  width: 110%;
+  height: 110%;
+  transform: translateX(-50%);
+  background: radial-gradient(circle at 50% 70%, rgba(255,60,60,0.28) 0%, transparent 60%);
+  border-radius: 50%;
+}
+
+.boss-emoji {
+  font-size: clamp(56px, 12vh, 110px);
+  line-height: 1;
   animation: floaty 3.6s ease-in-out infinite reverse;
+  filter: drop-shadow(0 0 22px rgba(255,60,60,0.55)) drop-shadow(0 10px 14px rgba(0,0,0,0.6));
 }
 
 @keyframes floaty {
@@ -521,25 +705,38 @@ html, body {
 .fighter-name {
   font-size: 13px;
   font-weight: bold;
+  text-shadow: 0 2px 6px rgba(0,0,0,0.8);
+  z-index: 2;
 }
 
 .fighter.boss .fighter-name {
   color: #ff8a8a;
 }
 
+.fighter-stats {
+  font-size: 11px;
+  color: var(--text-dim);
+  text-shadow: 0 2px 6px rgba(0,0,0,0.8);
+  z-index: 2;
+}
+
+.fighter-stats b { color: var(--gold); }
+
 .hp-wrap {
-  width: 100%;
-  max-width: 260px;
+  width: 86%;
   height: 16px;
-  background: rgba(255,255,255,0.1);
+  background: rgba(0,0,0,0.55);
+  border: 1px solid var(--dungeon-line);
   border-radius: 8px;
   overflow: hidden;
   position: relative;
+  z-index: 2;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.6);
 }
 
 .hp-fill {
   height: 100%;
-  border-radius: 8px;
+  border-radius: 7px;
   transition: width 0.35s ease;
   position: relative;
 }
@@ -551,23 +748,36 @@ html, body {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(255,255,255,0.25), transparent 60%);
+  background: linear-gradient(180deg, rgba(255,255,255,0.28), transparent 60%);
 }
 
 .hp-num {
   font-size: 12px;
   color: var(--text);
-  margin-top: 4px;
+  text-shadow: 0 2px 6px rgba(0,0,0,0.8);
   font-variant-numeric: tabular-nums;
+  z-index: 2;
 }
 
 .vs-divider {
-  font-size: 30px;
+  position: absolute;
+  left: 50%;
+  top: 40%;
+  transform: translate(-50%, -50%);
+  width: 74px;
+  height: 74px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #4a3d63, #2e2440 70%);
+  border: 3px solid var(--gold);
+  box-shadow: 0 0 26px rgba(232,201,122,0.4), inset 0 4px 10px rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
   font-weight: 900;
-  color: var(--accent2);
-  text-shadow: 0 0 20px rgba(255,209,102,0.5);
+  color: var(--gold);
+  text-shadow: 0 2px 4px rgba(0,0,0,0.6);
   z-index: 3;
-  flex-shrink: 0;
 }
 
 /* ターン表示 */
@@ -576,33 +786,36 @@ html, body {
   font-size: 12px;
   color: var(--text-dim);
   height: 18px;
+  font-weight: bold;
+  text-shadow: 0 2px 6px rgba(0,0,0,0.8);
 }
 
-.turn-banner b { color: var(--accent2); }
+.turn-banner b { color: var(--gold); }
 
 /* テロップ（バトルログ） */
 .telop-log {
-  height: 78px;
+  height: 68px;
   overflow: hidden;
-  background: rgba(0,0,0,0.45);
-  border: 1px solid var(--youtube-border);
-  border-radius: 10px;
+  background: linear-gradient(180deg, rgba(20,14,30,0.85), rgba(12,8,18,0.9));
+  border: 2px solid var(--dungeon-line);
+  border-radius: 12px;
   padding: 8px 12px;
   font-size: 12px;
-  line-height: 1.65;
+  line-height: 1.6;
   color: #ddd;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
   gap: 2px;
+  box-shadow: inset 0 2px 8px rgba(0,0,0,0.5);
 }
 
 .telop-line { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .telop-line.danger { color: #ff8a8a; }
 .telop-line.good { color: #8ef0b0; }
-.telop-line.super { color: #ffd166; font-weight: bold; }
+.telop-line.super { color: var(--gold); font-weight: bold; }
 
-/* コマンド */
+/* コマンド（石畳ボタン） */
 .command-bar {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -610,21 +823,22 @@ html, body {
 }
 
 .cmd-btn {
-  height: 48px;
-  border: 1px solid var(--youtube-border);
-  border-radius: 10px;
-  background: var(--youtube-panel);
+  height: 46px;
+  border: 2px solid var(--dungeon-line);
+  border-radius: 12px;
+  background: linear-gradient(180deg, #2f2642 0%, #221a30 100%);
   color: var(--text);
   font-size: 14px;
   font-weight: bold;
   cursor: pointer;
-  transition: background 0.15s, transform 0.1s;
+  transition: background 0.15s, transform 0.1s, border-color 0.15s;
   font-family: inherit;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.07), 0 3px 8px rgba(0,0,0,0.4);
 }
 
 .cmd-btn:hover:not(:disabled) {
-  background: rgba(255,77,109,0.15);
-  border-color: var(--accent);
+  background: linear-gradient(180deg, #3c3154 0%, #2b2138 100%);
+  border-color: var(--gold);
 }
 
 .cmd-btn:active:not(:disabled) {
@@ -679,7 +893,7 @@ html, body {
   text-shadow: 0 2px 8px rgba(0,0,0,0.7);
   animation: dmgFloat 0.9s ease-out forwards;
   pointer-events: none;
-  z-index: 5;
+  z-index: 10;
 }
 
 .dmg-pop.heal {
@@ -703,10 +917,15 @@ html, body {
   gap: 14px;
   padding: 20px;
   overflow-y: auto;
-  background: radial-gradient(ellipse at center, #1a1630 0%, #0d0b18 70%);
+  font-family: inherit;
+  z-index: 2;
 }
 
-.result-icon { font-size: 64px; animation: resultPop 0.5s ease-out; }
+.result-icon {
+  font-size: 64px;
+  animation: resultPop 0.5s ease-out;
+  filter: drop-shadow(0 0 24px rgba(232,201,122,0.4));
+}
 
 @keyframes resultPop {
   0% { transform: scale(0); }
@@ -717,22 +936,29 @@ html, body {
 .result-title {
   font-size: 26px;
   font-weight: 900;
+  letter-spacing: 0.06em;
+  text-shadow: 0 2px 12px rgba(0,0,0,0.8);
 }
 
-.result-title.win { color: #ffd166; }
+.result-title.win {
+  color: var(--gold);
+  text-shadow: 0 0 24px rgba(232,201,122,0.5);
+}
+
 .result-title.lose { color: #8a8a8a; }
 
 .result-sub { font-size: 13px; color: var(--text-dim); }
 
 .result-box {
-  background: var(--youtube-panel);
-  border: 1px solid var(--youtube-border);
+  background: linear-gradient(165deg, #2b2138 0%, #221a30 100%);
+  border: 2px solid var(--dungeon-line);
   border-radius: 14px;
   padding: 16px 20px;
   min-width: min(320px, 80vw);
   display: flex;
   flex-direction: column;
   gap: 8px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 8px 22px rgba(0,0,0,0.5);
 }
 
 .result-row {
@@ -741,7 +967,7 @@ html, body {
   font-size: 14px;
 }
 
-.result-row span:last-child { font-weight: bold; color: var(--accent2); }
+.result-row span:last-child { font-weight: bold; color: var(--gold); }
 
 .result-levelup {
   color: #8ef0b0;
@@ -774,8 +1000,8 @@ html, body {
 .result-btn:active { transform: scale(0.97); }
 
 .result-btn.secondary {
-  background: var(--youtube-panel);
-  border: 1px solid var(--youtube-border);
+  background: linear-gradient(180deg, #2f2642 0%, #221a30 100%);
+  border: 2px solid var(--dungeon-line);
   color: var(--text);
 }
 
@@ -800,9 +1026,9 @@ html, body {
 
   .chat-area {
     width: 100%;
-    height: 38vh;
+    height: 34vh;
     border-left: none;
-    border-top: 1px solid var(--youtube-border);
+    border-top: 2px solid var(--dungeon-line);
     order: 2;
   }
 
@@ -816,20 +1042,66 @@ html, body {
   .viewer-count { font-size: 12px; }
   .header-title { text-align: left; }
 
-  .battle-stage {
-    align-items: center;
+  /* タレント選択を見やすく（グリッド・横スクロール廃止） */
+  .talent-grid {
+    grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));
+    gap: 8px;
   }
 
-  .fighter-avatar {
-    width: 34%;
+  .talent-chip {
+    padding: 8px 4px 6px;
+    border-radius: 12px;
   }
 
-  .hp-wrap { max-width: 180px; }
+  .talent-chip img {
+    width: 52px;
+    height: 52px;
+  }
+
+  .talent-chip span {
+    font-size: 10px;
+    max-width: 80px;
+  }
 
   .boss-grid {
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 10px;
   }
 
-  .telop-log { height: 64px; font-size: 11px; }
-  .cmd-btn { height: 44px; font-size: 13px; }
+  .battle-stage {
+    align-items: flex-end;
+  }
+
+  .fighter-stand,
+  .boss-stand {
+    height: calc(100% - 84px);
+    max-height: 220px;
+  }
+
+  .fighter-avatar.portrait {
+    width: 88px;
+    height: 88px;
+    min-height: 88px;
+  }
+
+  .boss-emoji {
+    font-size: clamp(44px, 9vh, 72px);
+  }
+
+  .vs-divider {
+    width: 54px;
+    height: 54px;
+    font-size: 16px;
+  }
+
+  .hp-wrap { height: 14px; }
+  .hp-num { font-size: 11px; }
+  .fighter-name { font-size: 12px; }
+
+  .telop-log { height: 56px; font-size: 11px; }
+  .cmd-btn { height: 42px; font-size: 13px; }
+  .gift-btn { height: 38px; font-size: 11px; }
+
+  .torch { font-size: 22px; bottom: calc(22% + 40px); }
+  .torch-glow { width: 60px; height: 60px; }
 }
