@@ -24,7 +24,8 @@ function initFirebase() {
 // 連携が利用可能か（config 設定済み + SDK 読込済み）
 function firebaseAvailable() {
   initFirebase()
-  return firebaseReady
+  // database SDK が読込めていない場合は利用不可扱い（部分的なCDN障害で例外を出さない）
+  return firebaseReady && typeof firebase.database === 'function'
 }
 
 // 本アプリが発行した playerId を取得（milli-unishare / milli-games と共通形式）
@@ -92,7 +93,7 @@ function milliproLogout() {
 }
 
 function newPlayerIdFallback() {
-  if (crypto && typeof crypto.randomUUID === 'function') return crypto.randomUUID()
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') return crypto.randomUUID()
   return 'P' + Date.now()
 }
 
@@ -146,6 +147,26 @@ function applyMilliproProfile(profile) {
   return ud
 }
 
+// プロフィールの一部をクラウドに保存（ログイン中のみ。未ログインなら何もしない）
+// patch 例: { icon: '😊' } や { playerName: '...', comment: '...' }
+// 戻り値: Promise<boolean>（保存できたか）
+function updateMilliproProfile(patch) {
+  if (!isAuthAvailable()) return Promise.resolve(false)
+  var uid = getMilliproUid()
+  if (!uid) return Promise.resolve(false)
+  if (!patch || typeof patch !== 'object') return Promise.resolve(false)
+  patch.updatedAt = Date.now()
+  var ref = firebase.database().ref('millipro/users/' + uid + '/profile')
+  return ref.once('value').then(function (snap) {
+    var p = snap.val()
+    if (p && typeof p === 'object') return ref.update(patch)
+    return ref.set(patch)
+  }).then(function () { return true }).catch(function (e) {
+    console.warn('profile update failed:', e)
+    return false
+  })
+}
+
 // クラウドとゲームデータを同期（新しい方を採用。クラウドが無ければローカルをアップロード）
 // 戻り値: Promise<'pulled' | 'pushed' | 'none'>
 function syncMilliproGameData(uid) {
@@ -160,7 +181,7 @@ function syncMilliproGameData(uid) {
     }
     // ローカルが新しい or クラウドが無い → アップロード
     ref.set(local)
-    return cloud ? 'pushed' : 'pushed'
+    return cloud ? 'pushed' : 'created'
   }).catch(function (e) {
     console.warn('gamedata sync failed:', e)
     return 'none'

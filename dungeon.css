@@ -32,6 +32,7 @@ html, body {
 
 #app {
   height: 100vh;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
 }
@@ -1099,9 +1100,18 @@ html, body {
   .fighter-name { font-size: 12px; }
 
   .telop-log { height: 56px; font-size: 11px; }
-  .cmd-btn { height: 42px; font-size: 13px; }
-  .gift-btn { height: 38px; font-size: 11px; }
+  /* モバイルのタップ領域を44px以上に（誤タップ防止） */
+  .cmd-btn { height: 46px; font-size: 13px; }
+  .gift-btn { height: 44px; font-size: 11px; }
+  .header-btn { width: 44px; height: 44px; }
 
   .torch { font-size: 22px; bottom: calc(22% + 40px); }
   .torch-glow { width: 60px; height: 60px; }
+}
+/* ========== モバイル最適化 ========== */
+/* ダブルタップ拡大を無効化（ピンチズームは維持） */
+html,
+body {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }

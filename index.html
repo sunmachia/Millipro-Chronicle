@@ -104,10 +104,6 @@
         <div class="setting-bar" id="setting-volume-bar"><div class="setting-bar-fill" id="setting-volume-fill"></div></div>
       </div>
       <div class="setting-item">
-        <span>効果音</span>
-        <div class="setting-toggle" data-setting="se"></div>
-      </div>
-      <div class="setting-item">
         <span>BGM</span>
         <div class="setting-toggle" data-setting="bgm"></div>
       </div>
@@ -161,6 +157,92 @@
     </div>
   </div>
 </div>
+
+<!-- ショップ -->
+<div class="popup-overlay hidden" id="popup-shop">
+  <div class="popup-content popup-content-wide">
+    <div class="popup-header"><img class="popup-header-icon" src="images/pc/Milli Shop.png" alt="">Milli Shop</div>
+    <div class="popup-body" id="shop-body"></div>
+    <div class="popup-footer">
+      <button class="popup-close-btn">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<!-- 痛バッグ制作 -->
+<div class="popup-overlay hidden" id="popup-itabag">
+  <div class="popup-content popup-content-wide">
+    <div class="popup-header">🎒 痛バッグ制作</div>
+    <div class="popup-body" id="itabag-body"></div>
+    <div class="popup-footer">
+      <button class="popup-close-btn">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<!-- ジョブ -->
+<div class="popup-overlay hidden" id="popup-jobs">
+  <div class="popup-content popup-content-wide">
+    <div class="popup-header">🎖️ ジョブ</div>
+    <div class="popup-body" id="jobs-body"></div>
+    <div class="popup-footer">
+      <button class="popup-close-btn">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<!-- Canvas（お絵かき） -->
+<div class="popup-overlay hidden" id="popup-canvas">
+  <div class="popup-content popup-content-wide">
+    <div class="popup-header">🎨 Canvas</div>
+    <div class="popup-body" id="canvas-body"></div>
+    <div class="popup-footer">
+      <button class="popup-close-btn">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<!-- ギャラリー -->
+<div class="popup-overlay hidden" id="popup-gallery">
+  <div class="popup-content popup-content-wide">
+    <div class="popup-header">🖼️ ギャラリー</div>
+    <div class="popup-body" id="gallery-body"></div>
+    <div class="popup-footer">
+      <button class="popup-close-btn">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<!-- 図鑑 -->
+<div class="popup-overlay hidden" id="popup-zukan">
+  <div class="popup-content popup-content-wide">
+    <div class="popup-header">📚 図鑑</div>
+    <div class="popup-body" id="zukan-body"></div>
+    <div class="popup-footer">
+      <button class="popup-close-btn">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<!-- 記憶の庭 -->
+<div class="popup-overlay hidden" id="popup-garden">
+  <div class="popup-content popup-content-wide">
+    <div class="popup-header">🌳 記憶の庭</div>
+    <div class="popup-body" id="garden-body"></div>
+    <div class="popup-footer">
+      <button class="popup-close-btn">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<!-- ボトムタブバー -->
+<nav id="tab-bar" class="hidden">
+  <button class="tab-btn" data-tab="home">🏠<span>ホーム</span></button>
+  <button class="tab-btn" data-tab="shop"><img src="images/pc/Milli Shop.png" alt="ショップ"><span>ショップ</span></button>
+  <button class="tab-btn" data-tab="gallery">🖼️<span>ギャラリー</span></button>
+  <button class="tab-btn" data-tab="quests">📋<span>クエスト</span></button>
+  <button class="tab-btn" data-tab="office">🏢<span>事務所</span></button>
+</nav>
 
 <div id="home-screen" class="hidden">
   <!-- プレイヤーステータスバー -->
@@ -337,12 +419,28 @@
           <div class="pc-app-icon pc-app-emoji">🔗</div>
           <span class="pc-app-label">連携</span>
         </div>
+        <div class="pc-app" data-app="zukan">
+          <div class="pc-app-icon pc-app-emoji">📚</div>
+          <span class="pc-app-label">図鑑</span>
+        </div>
+        <div class="pc-app" data-app="garden">
+          <div class="pc-app-icon pc-app-emoji">🌳</div>
+          <span class="pc-app-label">記憶の庭</span>
+        </div>
       </div>
       <div class="pc-divider">━━━ ゲーム ━━━</div>
       <div class="pc-apps-grid">
         <div class="pc-app" data-app="dungeon">
           <div class="pc-app-icon pc-app-emoji">⚔️</div>
           <span class="pc-app-label">配信ダンジョン</span>
+        </div>
+        <div class="pc-app" data-app="itabag">
+          <div class="pc-app-icon pc-app-emoji">🎒</div>
+          <span class="pc-app-label">痛バッグ制作</span>
+        </div>
+        <div class="pc-app" data-app="gallery">
+          <div class="pc-app-icon pc-app-emoji">🖼️</div>
+          <span class="pc-app-label">ギャラリー</span>
         </div>
         <div class="pc-app" data-app="milligames">
           <div class="pc-app-icon"><img src="images/pc/Milli Games.png" alt="Milli Games"></div>
@@ -481,6 +579,16 @@
   <div id="loading" class="hidden">
     <div class="spinner"></div>
     <span>読み込み中...</span>
+  </div>
+</div>
+
+<!-- 報酬ダイアログ（自作ポップアップ） -->
+<div id="game-dialog" class="game-dialog hidden">
+  <div class="game-dialog-card">
+    <div class="game-dialog-icon" id="game-dialog-icon">🎉</div>
+    <div class="game-dialog-title" id="game-dialog-title"></div>
+    <div class="game-dialog-body" id="game-dialog-body"></div>
+    <button class="game-dialog-ok" id="game-dialog-ok">OK</button>
   </div>
 </div>
 

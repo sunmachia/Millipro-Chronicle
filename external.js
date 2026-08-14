@@ -74,6 +74,7 @@ function syncVideoRewards(gd, pid, db, result) {
       return chain.then(function () { resolve() })
     }).catch(function (e) {
       console.warn('watchEvents read failed:', e)
+      result.error = true
       resolve()
     })
   })
@@ -85,18 +86,22 @@ function syncGameRewards(gd, pid, db, result) {
     db.ref('millipro/gameEvents/' + pid).once('value').then(function (snap) {
       var games = snap.val() || {}
       if (!gd.externalRewards.gameLastClaimed) gd.externalRewards.gameLastClaimed = {}
+      // 同一バッチ内のウィンドウ判定を同期で行うためのローカル記録（onGranted は非同期のため）
+      var lastByGame = {}
       var chain = Promise.resolve()
       Object.keys(games).forEach(function (gameId) {
         var events = games[gameId] || {}
+        lastByGame[gameId] = gd.externalRewards.gameLastClaimed[gameId] || 0
         Object.keys(events).forEach(function (ts) {
           var ev = events[ts] || {}
-          var last = gd.externalRewards.gameLastClaimed[gameId] || 0
-          var playedAt = ev.playedAt || parseInt(ts, 10) || 0
-          if (playedAt - last < GAME_CLAIM_WINDOW_MS) return // 1時間以内はスキップ
+          var playedAt = ev.playedAt || parseInt(ts, 10) || Date.now()
           chain = chain.then(function () {
+            // 直前の受取（同一バッチ内の付与含む）から1時間以内ならスキップ
+            if (playedAt - lastByGame[gameId] < GAME_CLAIM_WINDOW_MS) return
             return claimMarkerOnce('millipro/rewards/' + pid + '/games/' + gameId + '/' + ts, function () {
               var r = EXTERNAL_REWARD.game
-              gd.externalRewards.gameLastClaimed[gameId] = playedAt
+              lastByGame[gameId] = Math.max(lastByGame[gameId], playedAt)
+              gd.externalRewards.gameLastClaimed[gameId] = lastByGame[gameId]
               result.gameCount++
               result.currency += r.currency
               result.exp += r.exp
@@ -107,6 +112,7 @@ function syncGameRewards(gd, pid, db, result) {
       return chain.then(function () { resolve() })
     }).catch(function (e) {
       console.warn('gameEvents read failed:', e)
+      result.error = true
       resolve()
     })
   })
@@ -114,7 +120,20 @@ function syncGameRewards(gd, pid, db, result) {
 
 // 外部報酬を同期して付与する
 // 戻り値: Promise<result>（result.available=false なら未設定）
+// 注意: 並行呼び出しは直列化する（read-modify-write 競合で報酬が消えるのを防ぐ）
+var externalSyncQueue = Promise.resolve()
+
 function syncExternalRewards() {
+  var run = externalSyncQueue.then(function () {
+    return runExternalSync()
+  })
+  // 失敗してもキューを詰まらせない
+  run.catch(function (e) { console.warn('external sync failed:', e) })
+  externalSyncQueue = run.catch(function () {})
+  return run
+}
+
+function runExternalSync() {
   return new Promise(function (resolve) {
     var result = { available: true, noPlayerId: false, videoCount: 0, gameCount: 0, currency: 0, exp: 0, cheer: 0 }
     if (!firebaseAvailable()) {
