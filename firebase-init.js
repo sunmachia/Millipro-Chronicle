@@ -36,3 +36,134 @@ function getMilliproPlayerId() {
     return null
   }
 }
+
+// 連携IDを手動設定（ログイン不要の「ID持ち込み方式」用。各サイトの入力UIから呼ぶ）
+function setMilliproPlayerId(id) {
+  var ud = null
+  try { ud = JSON.parse(localStorage.getItem('millipro_userdata')) } catch (e) {}
+  if (!ud || typeof ud !== 'object') ud = { createdAt: Date.now() }
+  ud.playerId = String(id)
+  ud.updatedAt = Date.now()
+  localStorage.setItem('millipro_userdata', JSON.stringify(ud))
+  return ud
+}
+
+// ============================================================
+// 共通アカウント（Firebase Auth）: 3サイトすべてが同じユーザーを使う
+// データパス: millipro/users/{uid}/profile = { playerId, playerName, updatedAt }
+//            millipro/users/{uid}/gamedata = ゲームデータ（本アプリのみ同期）
+// ============================================================
+
+function isAuthAvailable() {
+  return firebaseAvailable() && typeof firebase.auth === 'function'
+}
+
+function getMilliproUid() {
+  if (!isAuthAvailable()) return null
+  var u = firebase.auth().currentUser
+  return u ? u.uid : null
+}
+
+// ログイン状態の変化を監視（未ログイン/未設定なら null を渡す）
+function onMilliproAuth(cb) {
+  if (!isAuthAvailable()) {
+    cb(null)
+    return
+  }
+  firebase.auth().onAuthStateChanged(function (user) {
+    cb(user ? user.uid : null)
+  })
+}
+
+function milliproLogin(email, password) {
+  if (!isAuthAvailable()) return Promise.reject(new Error('auth unavailable'))
+  return firebase.auth().signInWithEmailAndPassword(email, password)
+}
+
+function milliproSignup(email, password) {
+  if (!isAuthAvailable()) return Promise.reject(new Error('auth unavailable'))
+  return firebase.auth().createUserWithEmailAndPassword(email, password)
+}
+
+function milliproLogout() {
+  if (!isAuthAvailable()) return Promise.resolve()
+  return firebase.auth().signOut()
+}
+
+function newPlayerIdFallback() {
+  if (crypto && typeof crypto.randomUUID === 'function') return crypto.randomUUID()
+  return 'P' + Date.now()
+}
+
+// プロフィールを保証する（無ければローカルの playerId で作成）
+// 戻り値: Promise<profile>
+function ensureMilliproProfile(uid) {
+  var ud = null
+  try { ud = JSON.parse(localStorage.getItem('millipro_userdata')) } catch (e) {}
+  var localId = ud && ud.playerId
+  var localName = ud && ud.playerName
+
+  return firebase.database().ref('millipro/users/' + uid + '/profile').once('value').then(function (snap) {
+    var p = snap.val()
+    var now = Date.now()
+    if (p && typeof p === 'object') {
+      var changed = false
+      if (!p.playerId) { p.playerId = localId || newPlayerIdFallback(); changed = true }
+      if (!p.playerName && localName) { p.playerName = localName; changed = true }
+      if (changed) firebase.database().ref('millipro/users/' + uid + '/profile').set(p)
+      return p
+    }
+    var np = {
+      playerId: localId || newPlayerIdFallback(),
+      playerName: localName || '',
+      updatedAt: now,
+    }
+    firebase.database().ref('millipro/users/' + uid + '/profile').set(np)
+    return np
+  })
+}
+
+// プロフィールの playerId / playerName をこの端末の localStorage に反映（他項目は保持）
+// 戻り値: 反映後のユーザーデータ（なければ新規作成）
+function applyMilliproProfile(profile) {
+  var ud = null
+  try { ud = JSON.parse(localStorage.getItem('millipro_userdata')) } catch (e) {}
+  if (!ud || typeof ud !== 'object') ud = { createdAt: Date.now() }
+  ud.playerId = profile.playerId
+  if (profile.playerName) ud.playerName = profile.playerName
+  ud.updatedAt = Date.now()
+  localStorage.setItem('millipro_userdata', JSON.stringify(ud))
+  return ud
+}
+
+// クラウドとゲームデータを同期（新しい方を採用。クラウドが無ければローカルをアップロード）
+// 戻り値: Promise<'pulled' | 'pushed' | 'none'>
+function syncMilliproGameData(uid) {
+  var ref = firebase.database().ref('millipro/users/' + uid + '/gamedata')
+  return ref.once('value').then(function (snap) {
+    var cloud = snap.val()
+    var local = loadGameData()
+    if (cloud && typeof cloud === 'object' && cloud.updatedAt > local.updatedAt) {
+      // クラウドが新しい → ローカルに反映
+      localStorage.setItem('millipro_gamedata', JSON.stringify(migrateGameData(cloud)))
+      return 'pulled'
+    }
+    // ローカルが新しい or クラウドが無い → アップロード
+    ref.set(local)
+    return cloud ? 'pushed' : 'pushed'
+  }).catch(function (e) {
+    console.warn('gamedata sync failed:', e)
+    return 'none'
+  })
+}
+
+// ログイン時にまとめて実行: プロフィール保証 → playerId を端末へ反映 → ゲームデータ同期
+// 戻り値: Promise<{ profile, syncMode }>
+function completeMilliproLogin(uid) {
+  return ensureMilliproProfile(uid).then(function (profile) {
+    applyMilliproProfile(profile)
+    return syncMilliproGameData(uid).then(function (mode) {
+      return { profile: profile, syncMode: mode }
+    })
+  })
+}

@@ -851,7 +851,46 @@ function renderExternalScreen() {
     return
   }
 
+  var uid = getMilliproUid()
+  var accountHtml
+  if (isAuthAvailable()) {
+    if (uid) {
+      var email = firebase.auth().currentUser.email
+      accountHtml =
+        '<div class="external-account logged-in">' +
+          '<div class="external-account-head">👤 アカウント連携済み</div>' +
+          '<div class="external-account-row"><span>メール</span><b>' + (email || '') + '</b></div>' +
+          '<div class="external-account-row"><span>連携ID</span><b>' + pid + '</b></div>' +
+          '<div class="external-account-note">このIDで Unishare / ミニゲームの報酬が届きます。別の端末では「アカウント連携（ログイン）」をしてください。</div>' +
+          '<button class="external-logout-btn" id="external-logout-btn">ログアウト</button>' +
+          '<div class="external-auth-msg" id="auth-msg"></div>' +
+        '</div>'
+    } else {
+      accountHtml =
+        '<div class="external-account">' +
+          '<div class="external-account-head">🔐 アカウント連携（全サイト共通ログイン）</div>' +
+          '<div class="external-account-row"><span>連携ID</span><b>' + pid + '</b><button class="external-copy-btn" id="external-copy-btn">コピー</button></div>' +
+          '<div class="external-account-note">Milli Unishare / ミニゲームでも同じアカウントでログインすると、プレイヤーIDが自動で統一されます。ログイン不要で使う場合は「連携ID」を各サイトに入力してください。</div>' +
+          '<input class="external-input" id="auth-email" type="email" placeholder="メールアドレス" autocomplete="email">' +
+          '<input class="external-input" id="auth-pass" type="password" placeholder="パスワード" autocomplete="current-password">' +
+          '<div class="external-input-row">' +
+            '<button class="external-auth-btn" id="auth-login-btn">ログイン</button>' +
+            '<button class="external-auth-btn secondary" id="auth-signup-btn">新規作成</button>' +
+          '</div>' +
+          '<div class="external-auth-msg" id="auth-msg"></div>' +
+        '</div>'
+    }
+  } else {
+    accountHtml =
+      '<div class="external-account">' +
+        '<div class="external-account-head">🔐 アカウント連携</div>' +
+        '<div class="external-account-row"><span>連携ID</span><b>' + pid + '</b><button class="external-copy-btn" id="external-copy-btn">コピー</button></div>' +
+        '<div class="external-account-note">このIDを Unishare / ミニゲームに入力すると報酬が届きます。</div>' +
+      '</div>'
+  }
+
   body.innerHTML =
+    accountHtml +
     '<div class="external-status">' +
       '<div class="external-status-row"><span>プレイヤーID</span><b>' + pid + '</b></div>' +
       '<div class="external-status-row"><span>連携サイト</span><b>Milli Unishare / Milli Games</b></div>' +
@@ -860,10 +899,72 @@ function renderExternalScreen() {
     '<div class="external-result" id="external-result"></div>' +
     '<button class="external-sync-btn" id="external-sync-btn">🔄 同期する</button>'
 
+  var copyBtn = document.getElementById('external-copy-btn')
+  if (copyBtn) {
+    copyBtn.addEventListener('click', function () {
+      copyMilliproPlayerId(pid)
+    })
+  }
+  var loginBtn = document.getElementById('auth-login-btn')
+  var signupBtn = document.getElementById('auth-signup-btn')
+  if (loginBtn && signupBtn) {
+    loginBtn.addEventListener('click', function () { submitMilliproAuth('login') })
+    signupBtn.addEventListener('click', function () { submitMilliproAuth('signup') })
+  }
+  var logoutBtn = document.getElementById('external-logout-btn')
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', function () {
+      milliproLogout().then(function () {
+        renderExternalScreen()
+      })
+    })
+  }
   document.getElementById('external-sync-btn').addEventListener('click', function () {
     runExternalSync()
   })
 }
+
+// 連携IDをクリップボードにコピー（失敗時は選択を促す）
+function copyMilliproPlayerId(pid) {
+  var done = function () { playTapSound() }
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(pid).then(done).catch(function () { done() })
+  } else {
+    done()
+  }
+}
+
+// ログイン / 新規作成の送信
+function submitMilliproAuth(mode) {
+  var msg = document.getElementById('auth-msg')
+  var email = document.getElementById('auth-email').value.trim()
+  var pass = document.getElementById('auth-pass').value
+  if (!email || !pass) {
+    msg.textContent = 'メールアドレスとパスワードを入力してください。'
+    return
+  }
+  msg.textContent = '処理中...'
+  var p = mode === 'signup' ? milliproSignup(email, pass) : milliproLogin(email, pass)
+  p.then(function () {
+    var uid = getMilliproUid()
+    if (!uid) throw new Error('uid not found')
+    return completeMilliproLogin(uid).then(function (res) {
+      refreshPlayerStatus()
+      renderExternalScreen()
+      runExternalSync()
+      var msg2 = document.getElementById('auth-msg')
+      if (msg2) msg2.textContent = '✓ アカウント連携しました（' + (res.syncMode === 'pulled' ? 'ゲームデータを読み込み' : 'ゲームデータを保存') + '）'
+    })
+  }).catch(function (e) {
+    msg.textContent = e && e.message ? e.message : 'エラーが発生しました。'
+  })
+}
+
+// ログイン状態が変わったら（別タブ等）連携画面を再描画
+onMilliproAuth(function () {
+  var popup = document.getElementById('popup-external')
+  if (popup && !popup.classList.contains('hidden')) renderExternalScreen()
+})
 
 // 同期実行（外部報酬を付与して結果を表示）
 function runExternalSync() {

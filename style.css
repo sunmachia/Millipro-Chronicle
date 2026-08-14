@@ -1656,6 +1656,117 @@ body{
   padding: 2px 0;
 }
 
+/* アカウント連携（共通ログイン） */
+.external-account {
+  background: #f8f6ff;
+  border: 1px solid #e6deff;
+  border-radius: 12px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+}
+
+.external-account-head {
+  font-size: 13px;
+  font-weight: bold;
+  color: #6d5bb8;
+  margin-bottom: 6px;
+}
+
+.external-account-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  padding: 3px 0;
+  color: #777;
+}
+
+.external-account-row b {
+  color: #444;
+  word-break: break-all;
+}
+
+.external-account-note {
+  font-size: 10.5px;
+  color: #999;
+  line-height: 1.6;
+  margin: 6px 0;
+}
+
+.external-copy-btn {
+  background: #fff;
+  border: 1px solid #cdc0f0;
+  color: #6d5bb8;
+  border-radius: 99px;
+  padding: 3px 12px;
+  font-size: 10.5px;
+  font-weight: bold;
+  cursor: pointer;
+  margin-left: 8px;
+  white-space: nowrap;
+}
+
+.external-copy-btn:hover {
+  background: #efe9ff;
+}
+
+.external-input {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 6px 0;
+  padding: 8px 10px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  font-size: 13px;
+  background: #fff;
+}
+
+.external-input-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.external-auth-btn {
+  flex: 1;
+  background: linear-gradient(135deg, #6d5bb8, #8b7fd4);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 9px;
+  font-size: 13px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.external-auth-btn.secondary {
+  background: #fff;
+  color: #6d5bb8;
+  border: 1px solid #cdc0f0;
+}
+
+.external-auth-msg {
+  font-size: 11px;
+  color: #4caf50;
+  margin-top: 6px;
+}
+
+.external-logout-btn {
+  background: #fff;
+  color: #c46a6a;
+  border: 1px solid #e2b6b6;
+  border-radius: 10px;
+  padding: 6px 14px;
+  font-size: 11px;
+  cursor: pointer;
+  margin-top: 4px;
+}
+
+.external-logout-btn:hover {
+  background: #fdeeee;
+}
+
 /* ========== プレイヤー設定画面 ========== */
 #setup-screen {
   position: fixed;
