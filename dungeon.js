@@ -681,10 +681,10 @@ function applyRewards() {
   gd.points.cheer += reward.cheer
   if (state.won) gd.stats.dungeonClears++
   // クエスト進行（通貨獲得・応援力獲得・クリア回数）
-  questAddProgress(gd, ['currencyEarned', 'cheerGained'], reward.currency)
+  questAddProgress(gd, 'currencyEarned', reward.currency)
+  questAddProgress(gd, 'cheerGained', reward.cheer)
   if (state.won) {
     questAddProgress(gd, 'dungeonClears')
-    questAddProgress(gd, 'cheerGained', reward.cheer)
   }
   saveGameData(gd)
   refreshHeader()

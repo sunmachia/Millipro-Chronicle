@@ -69,12 +69,13 @@ function expRequiredForLevel(level) {
 }
 
 // 配信ダンジョン報酬（§16）: ボスランク別
+// 2026-08-14 バランス調整: 低Lv帯のレベル上げが遅すぎたため全報酬を強化
 const DUNGEON_REWARDS = {
-  1: { currency: 20, exp: 15, cheer: 10 },
-  2: { currency: 50, exp: 35, cheer: 20 },
-  3: { currency: 100, exp: 70, cheer: 40 },
-  4: { currency: 180, exp: 120, cheer: 70 },
-  5: { currency: 300, exp: 200, cheer: 120 },
+  1: { currency: 50, exp: 50, cheer: 25 },
+  2: { currency: 120, exp: 100, cheer: 50 },
+  3: { currency: 250, exp: 180, cheer: 100 },
+  4: { currency: 400, exp: 300, cheer: 180 },
+  5: { currency: 650, exp: 480, cheer: 300 },
 }
 
 // 配信ダンジョンのボス（§16: タレントではなく"トラブル"）
@@ -88,7 +89,8 @@ const DUNGEON_BOSSES = [
 ]
 
 // ダンジョン挑戦頻度制限（§16: 1時間に5回まで）
-const DUNGEON_LIMIT = 5
+// 1時間窓の挑戦回数上限（2026-08-14: 5回→8回に緩和）
+const DUNGEON_LIMIT = 8
 const DUNGEON_LIMIT_WINDOW_MS = 60 * 60 * 1000
 
 // ショップ品目（§18）
@@ -243,11 +245,11 @@ function dungeonBossByRank(rank) {
   return DUNGEON_BOSSES.find(function (b) { return b.rank === rank }) || null
 }
 
-// 勝利/敗北時の報酬
+// 勝利/敗北時の報酬（2026-08-14: 敗北時も勝利の30%のEXP+通貨を付与）
 function dungeonReward(rank, won) {
   var r = DUNGEON_REWARDS[rank] || DUNGEON_REWARDS[1]
   if (won) return { currency: r.currency, exp: r.exp, cheer: r.cheer }
-  return { currency: Math.round(r.currency * 0.1), exp: 0, cheer: 0 } // 敗北時はわずかな通貨のみ
+  return { currency: Math.round(r.currency * 0.3), exp: Math.round(r.exp * 0.3), cheer: 0 } // 敗北時は30%のみ
 }
 
 // ---- クエスト（§14: 日替わり・週替わり）----
