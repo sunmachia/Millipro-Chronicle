@@ -24,7 +24,8 @@ function initFirebase() {
 // 連携が利用可能か（config 設定済み + SDK 読込済み）
 function firebaseAvailable() {
   initFirebase()
-  return firebaseReady
+  // database SDK が読込めていない場合は利用不可扱い（部分的なCDN障害で例外を出さない）
+  return firebaseReady && typeof firebase.database === 'function'
 }
 
 // 本アプリが発行した playerId を取得（milli-unishare / milli-games と共通形式）
@@ -145,7 +146,7 @@ function milliproResetPassword(email) {
 }
 
 function newPlayerIdFallback() {
-  if (crypto && typeof crypto.randomUUID === 'function') return crypto.randomUUID()
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') return crypto.randomUUID()
   return 'P' + Date.now()
 }
 
@@ -243,7 +244,7 @@ function syncMilliproGameData(uid) {
     }
     // ローカルが新しい or クラウドが無い → アップロード
     ref.set(local)
-    return cloud ? 'pushed' : 'pushed'
+    return cloud ? 'pushed' : 'created'
   }).catch(function (e) {
     console.warn('gamedata sync failed:', e)
     return 'none'

@@ -95,11 +95,18 @@ function setActiveTab(tab) {
   })
 }
 
+// 痛バッグ制作のタイマーと進行を破棄（閉じ方に関わらず常に呼ばれる）
+function stopItabagGame() {
+  if (window._itabagTimer) { clearInterval(window._itabagTimer); window._itabagTimer = null }
+  itabagState = null
+}
+
 function openPopup(id) {
   var el = document.getElementById(id)
   if (!el) return
   // 常に1画面のみ表示（開く前に他を閉じる）
   document.querySelectorAll('.popup-overlay:not(.hidden)').forEach(function (o) {
+    if (o.id === 'popup-itabag' && id !== 'popup-itabag') stopItabagGame()
     o.classList.add('hidden')
   })
   el.classList.remove('hidden')
@@ -114,6 +121,7 @@ function openPopup(id) {
 }
 
 function closePopup() {
+  stopItabagGame()
   if (screenHistory.length > 1) {
     // サブ画面：1つ前の画面に戻る
     screenHistory.pop()
@@ -123,6 +131,13 @@ function closePopup() {
     })
     var prevEl = document.getElementById(prev)
     if (prevEl) prevEl.classList.remove('hidden')
+    // 戻り先の画面を再描画して最新の状態を反映（ジョブ解放後のプレイヤーカードなど）
+    // 注意: タブ画面（ギャラリー等）は再描画しない。Canvas→ギャラリー遷移の途中状態を壊さないため
+    if (prev === 'popup-player-card') {
+      renderPlayerCard()
+    } else if (prev === 'popup-jobs') {
+      renderJobsScreen()
+    }
     updateTabBarVisibility()
     return
   }
@@ -178,7 +193,14 @@ document.querySelectorAll('#tab-bar .tab-btn').forEach(function (btn) {
   btn.addEventListener('click', function () {
     var tab = btn.dataset.tab
     if (tab === 'home') {
-      closePopup()
+      // サブ画面（ジョブ管理など）のスタックがあっても必ず1回でホームへ戻る
+      stopItabagGame()
+      screenHistory = []
+      document.querySelectorAll('.popup-overlay:not(.hidden)').forEach(function (o) {
+        o.classList.add('hidden')
+      })
+      setActiveTab('home')
+      updateTabBarVisibility()
     } else {
       var render = TAB_RENDER[tab]
       if (render) render()
@@ -1111,6 +1133,11 @@ function renderOfficeScreen() {
 
   var stageIdx = gd.office.stage - 1
   var stage = OFFICE_STAGES[stageIdx]
+  if (!stage) {
+    // セーブデータ異常時は第1段階として描画（クラッシュ防止）
+    gd.office.stage = 1
+    stage = OFFICE_STAGES[0]
+  }
   var nextStage = OFFICE_STAGES[gd.office.stage]
   var visual = officeBuildingVisual(gd.office.stage)
   var cheer = gd.points.cheer
@@ -1256,7 +1283,7 @@ function renderExternalScreen() {
   var accountHtml
   if (isAuthAvailable()) {
     if (uid) {
-      var email = firebase.auth().currentUser.email
+      var email = (firebase.auth().currentUser || {}).email
       accountHtml =
         '<div class="external-account logged-in">' +
           '<div class="external-account-head">👤 アカウント連携済み</div>' +
@@ -1693,7 +1720,7 @@ function renderQuestsScreen() {
         rewardLine('💰 通貨 +' + reward.currency),
         rewardLine('⭐ EXP +' + reward.exp)
       ]
-      if (lv.leveledUp) rewardParts.push(rewardLine('⬆️ レベルアップ！ Lv.' + lv.level, 'levelup'))
+      if (lv.leveledUp) rewardParts.push(rewardLine('⬆️ レベルアップ！ Lv.' + lv.newLevel, 'levelup'))
       showGameDialog({
         icon: '🎁',
         title: '報酬を受け取りました',
@@ -2080,6 +2107,11 @@ document.addEventListener('touchmove', function (e) {
   var dx = t.clientX - itabagDrag.startX
   var dy = t.clientY - itabagDrag.startY
   if (dx * dx + dy * dy < 100) return
+  // 縦方向が主体のスワイプはスクロールとして扱い、ドラッグを中止（preventDefault しない）
+  if (Math.abs(dy) > Math.abs(dx) * 1.5) {
+    itabagDrag = null
+    return
+  }
   e.preventDefault()
   itabagDrag.active = true
   var ghost = document.createElement('div')
@@ -2175,15 +2207,12 @@ function finishItabagGame(lastStars) {
 }
 
 // ポップアップを閉じたらタイマーを止める（痛バッグ制作の進行を破棄）
+// ←戻る・閉じる・背景クリック・タブ切替のどの経路でも openPopup/closePopup 経由で stopItabagGame が呼ばれる
 ;(function () {
   var popup = document.getElementById('popup-itabag')
   if (!popup) return
-  function stopTimer() {
-    if (window._itabagTimer) { clearInterval(window._itabagTimer); window._itabagTimer = null }
-    itabagState = null
-  }
   popup.addEventListener('click', function (e) {
-    if (e.target === popup || e.target.closest('.popup-close-btn')) stopTimer()
+    if (e.target === popup || e.target.closest('.popup-close-btn')) stopItabagGame()
   })
 })()
 
@@ -2771,6 +2800,11 @@ function renderGalleryAllTab() {
 function loadGalleryAll() {
   var body = document.getElementById('gallery-body')
   if (!body) return
+  if (!firebaseAvailable()) {
+    var bodyEl0 = body.querySelector('.gallery-tab-body')
+    if (bodyEl0) bodyEl0.innerHTML = '<div class="gallery-empty">Firebase が未設定のためみんなのギャラリーを表示できません。</div>'
+    return
+  }
   syncGallerySales().then(function (result) {
     if (result.count > 0) {
       showGameDialog({
@@ -2782,6 +2816,9 @@ function loadGalleryAll() {
     var pid = getMilliproPlayerId()
     var db = firebase.database()
     db.ref('millipro/gallery').once('value').then(function (snap) {
+      // 読み込み中に別タブへ切り替えていたら反映しない（競合防止）
+      var activeTab = body.querySelector('.gallery-tab.active')
+      if (!activeTab || activeTab.dataset.tab !== 'all') return
       var all = snap.val() || {}
       galleryRemoteList = Object.keys(all).map(function (k) { return all[k] })
         .filter(function (a) { return a && a.mode === 'sale' || (a && a.mode === 'exhibit') })
@@ -2831,6 +2868,11 @@ function loadGalleryAll() {
       bodyEl.querySelectorAll('.gallery-buy-btn').forEach(function (btn) {
         btn.addEventListener('click', function () { galleryBuyArtwork(btn.dataset.artId) })
       })
+    }).catch(function () {
+      var activeTab = body.querySelector('.gallery-tab.active')
+      if (!activeTab || activeTab.dataset.tab !== 'all') return
+      var bodyEl = body.querySelector('.gallery-tab-body')
+      if (bodyEl) bodyEl.innerHTML = '<div class="gallery-empty">ギャラリーを読み込めませんでした。通信環境を確認して再度お試しください。</div>'
     })
   })
 }
@@ -2911,7 +2953,16 @@ function galleryBuyArtwork(artId) {
 
 // 売上を同期して付与する（売上90% + 人気+10/件）
 // 戻り値: Promise<result>（result.available=false なら未設定）
+// 注意: 並行呼び出しは直列化する（read-modify-write 競合で二重付与・消失を防ぐ）
+var gallerySalesQueue = Promise.resolve()
+
 function syncGallerySales() {
+  var run = gallerySalesQueue.then(function () { return runGallerySalesSync() })
+  gallerySalesQueue = run.catch(function () {})
+  return run
+}
+
+function runGallerySalesSync() {
   return new Promise(function (resolve) {
     var result = { available: true, noPlayerId: false, count: 0, currency: 0 }
     if (!firebaseAvailable()) {

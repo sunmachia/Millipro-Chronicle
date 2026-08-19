@@ -27,6 +27,7 @@ var ctx = {
   console: console,
   window: { location: { origin: 'https://test.example' } },
   firebase: {
+    database: function () {},
     auth: function () {
       return {
         sendPasswordResetEmail: function (email, opts) { sent = { email: email, opts: opts } },
