@@ -30,7 +30,7 @@ function loadUserDataLocal() {
   } catch (e) { return null }
 }
 
-var user = loadUserDataLocal() || { playerName: 'リスナー' }
+var user = loadUserDataLocal() || { name: 'リスナー' }
 
 // ---- ゲームデータ（gameData.js の関数を利用） ----
 var gd = loadGameData() || ensureGameData()
@@ -47,8 +47,7 @@ function dungeonRand(min, max) {
 
 // ---- 立ち絵: images/standing/<id>.png を使用。無ければ talents/<id>.webp へフォールバック ----
 function talentImg(id, cls) {
-  var isAvatar = cls && cls.indexOf('fighter-avatar') === 0
-  var onErr = "this.onerror=null;this.src='images/talents/" + id + ".webp';" + (isAvatar ? "this.classList.add('portrait');" : '')
+  var onErr = "this.onerror=null;this.src='images/talents/" + id + ".webp';this.classList.add('portrait');"
   return '<img class="' + (cls || '') + '" src="images/standing/' + id + '.png" alt="" loading="lazy" onerror="' + onErr + '">'
 }
 
@@ -182,7 +181,7 @@ function pushChat(text, opts) {
     var author = document.createElement('span')
     author.className = 'chat-author'
     author.style.color = opts.color || NAME_COLORS[Math.floor(Math.random() * NAME_COLORS.length)]
-    author.textContent = opts.name || (opts.me ? (user.playerName || user.name || 'リスナー') : pick(FAN_NAMES))
+    author.textContent = opts.name || (opts.me ? user.name : pick(FAN_NAMES))
     var span = document.createElement('span')
     span.textContent = text
     msg.appendChild(author)
@@ -366,7 +365,6 @@ function startBattle() {
   VIEW = 'battle'
   setStreamMeta('【' + talent.name + '】 が トラブル『' + boss.name + '』に挑戦！')
   renderBattle()
-  startCommentFlow()
   pushTelop('配信開始！ ' + talent.name + ' が ' + boss.name + ' に挑む！！', 'good')
   pushChat('配信開始！ よろしくお願いします！', { me: true })
   pushChat('🎉 配信開始！', { name: pick(FAN_NAMES) })
@@ -682,11 +680,6 @@ function applyRewards() {
 
   gd.currency += reward.currency
   var lv = addExp(gd, reward.exp)
-  // 旧スキーマのセーブデータで points/stats の一部キーが欠けている場合に備えた防御
-  if (!gd.points) gd.points = { cheer: 0, knowledge: 0, create: 0, music: 0, popularity: 0 }
-  if (!gd.stats) gd.stats = {}
-  if (typeof gd.points.cheer !== 'number') gd.points.cheer = 0
-  if (typeof gd.stats.dungeonClears !== 'number') gd.stats.dungeonClears = 0
   gd.points.cheer += reward.cheer
   if (state.won) gd.stats.dungeonClears++
   // クエスト進行（通貨獲得・応援力獲得・クリア回数）

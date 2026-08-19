@@ -42,6 +42,7 @@
         <button type="button" class="pass-toggle-btn" id="login-gate-pass-toggle">👁</button>
       </div>
       <button class="external-auth-btn" id="login-gate-login-btn">ログイン</button>
+      <button type="button" class="password-reset-link" id="login-gate-forgot-btn">パスワードをお忘れですか？</button>
     </div>
     <div id="gate-panel-signup" class="hidden">
       <input class="external-input" id="signup-gate-email" type="email" placeholder="メールアドレス" autocomplete="email">
@@ -56,6 +57,17 @@
       <button class="external-auth-btn" id="login-gate-signup-btn">新規登録</button>
     </div>
     <div class="external-auth-msg" id="login-gate-msg"></div>
+  </div>
+</div>
+
+<div id="password-reset-dialog" class="password-reset-dialog hidden">
+  <div class="password-reset-box">
+    <button type="button" class="password-reset-close" id="reset-close-btn">✕</button>
+    <div class="password-reset-title">🔑 パスワードを再設定</div>
+    <div class="password-reset-sub">登録したメールアドレスに再設定用のリンクを送信します。</div>
+    <input class="external-input" id="reset-email" type="email" placeholder="メールアドレス" autocomplete="email">
+    <button type="button" class="external-auth-btn" id="reset-send-btn">メールを送信</button>
+    <div class="external-auth-msg" id="reset-msg"></div>
   </div>
 </div>
 
@@ -196,6 +208,17 @@
   <div class="popup-content popup-content-wide">
     <div class="popup-header">🎨 Canvas</div>
     <div class="popup-body" id="canvas-body"></div>
+    <div class="popup-footer">
+      <button class="popup-close-btn">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<!-- 推し設定 -->
+<div class="popup-overlay hidden" id="popup-oshi">
+  <div class="popup-content popup-content-wide">
+    <div class="popup-header">💖 推し設定</div>
+    <div class="popup-body" id="oshi-body"></div>
     <div class="popup-footer">
       <button class="popup-close-btn">閉じる</button>
     </div>

@@ -1,0 +1,67 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "millipro": {
+      ".read": true,
+      "users": {
+        "$uid": {
+          ".read": "auth != null && auth.uid === $uid",
+          ".write": "auth != null && auth.uid === $uid"
+        }
+      },
+      "watchEvents": {
+        "$playerId": {
+          "$videoId": {
+            "$date": {
+              ".write": true,
+              ".validate": "newData.hasChildren(['watchedAt','durationSec']) && newData.child('watchedAt').isNumber() && newData.child('durationSec').isNumber()"
+            }
+          }
+        }
+      },
+      "gameEvents": {
+        "$playerId": {
+          "$gameId": {
+            "$ts": {
+              ".write": true,
+              ".validate": "newData.hasChildren(['score','playedAt']) && newData.child('score').isNumber() && newData.child('playedAt').isNumber()"
+            }
+          }
+        }
+      },
+      "rewards": {
+        "$playerId": {
+          "$kind": {
+            "$itemId": {
+              "$key": {
+                ".write": "auth != null",
+                ".validate": "newData.hasChildren(['grantedAt']) && newData.child('grantedAt').isNumber()"
+              }
+            }
+          }
+        }
+      },
+      "gallery": {
+        "$artId": {
+          ".write": "auth != null",
+          ".validate": "newData.hasChildren(['id','playerId','title','imageData','mode','createdAt','price']) && newData.child('id').isString() && newData.child('playerId').isString() && newData.child('title').isString() && newData.child('imageData').isString() && newData.child('mode').isString() && newData.child('createdAt').isNumber() && newData.child('price').isNumber()",
+          "reactions": {
+            "$pid": {
+              ".write": "auth != null",
+              ".validate": "newData.isNumber()"
+            }
+          }
+        }
+      },
+      "gallerySales": {
+        "$playerId": {
+          "$artId": {
+            ".write": "auth != null",
+            ".validate": "newData.hasChildren(['price','at']) && newData.child('price').isNumber() && newData.child('at').isNumber()"
+          }
+        }
+      }
+    }
+  }
+}

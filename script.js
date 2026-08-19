@@ -95,18 +95,11 @@ function setActiveTab(tab) {
   })
 }
 
-// 痛バッグ制作のタイマーと進行を破棄（閉じ方に関わらず常に呼ばれる）
-function stopItabagGame() {
-  if (window._itabagTimer) { clearInterval(window._itabagTimer); window._itabagTimer = null }
-  itabagState = null
-}
-
 function openPopup(id) {
   var el = document.getElementById(id)
   if (!el) return
   // 常に1画面のみ表示（開く前に他を閉じる）
   document.querySelectorAll('.popup-overlay:not(.hidden)').forEach(function (o) {
-    if (o.id === 'popup-itabag' && id !== 'popup-itabag') stopItabagGame()
     o.classList.add('hidden')
   })
   el.classList.remove('hidden')
@@ -121,7 +114,6 @@ function openPopup(id) {
 }
 
 function closePopup() {
-  stopItabagGame()
   if (screenHistory.length > 1) {
     // サブ画面：1つ前の画面に戻る
     screenHistory.pop()
@@ -131,13 +123,6 @@ function closePopup() {
     })
     var prevEl = document.getElementById(prev)
     if (prevEl) prevEl.classList.remove('hidden')
-    // 戻り先の画面を再描画して最新の状態を反映（ジョブ解放後のプレイヤーカードなど）
-    // 注意: タブ画面（ギャラリー等）は再描画しない。Canvas→ギャラリー遷移の途中状態を壊さないため
-    if (prev === 'popup-player-card') {
-      renderPlayerCard()
-    } else if (prev === 'popup-jobs') {
-      renderJobsScreen()
-    }
     updateTabBarVisibility()
     return
   }
@@ -193,14 +178,7 @@ document.querySelectorAll('#tab-bar .tab-btn').forEach(function (btn) {
   btn.addEventListener('click', function () {
     var tab = btn.dataset.tab
     if (tab === 'home') {
-      // サブ画面（ジョブ管理など）のスタックがあっても必ず1回でホームへ戻る
-      stopItabagGame()
-      screenHistory = []
-      document.querySelectorAll('.popup-overlay:not(.hidden)').forEach(function (o) {
-        o.classList.add('hidden')
-      })
-      setActiveTab('home')
-      updateTabBarVisibility()
+      closePopup()
     } else {
       var render = TAB_RENDER[tab]
       if (render) render()
@@ -688,6 +666,11 @@ function confirmSetup() {
   saveUserData(data)
   ensureGameData()
 
+  // ログイン中なら最推し/推しを共有プロフィール（全サイト共通）へ保存
+  if (isAuthAvailable() && getMilliproUid()) {
+    updateMilliproOshi(data.ultimateOshi, data.favorites).catch(function () {})
+  }
+
   var confirmCard = document.querySelector('.setup-page[data-page="4"] .setup-page-inner')
   confirmCard.innerHTML =
     '<div class="setup-success">' +
@@ -848,6 +831,7 @@ function renderPlayerCard() {
 
     '<div class="player-card-section-title">プロフィール編集</div>' +
     '<button class="profile-edit-btn" id="profile-edit-btn">✏️ アイコンを変更</button>' +
+    '<button class="profile-edit-btn" id="oshi-edit-btn">💖 推し設定を変更</button>' +
     '<div class="icon-editor hidden" id="icon-editor"></div>'
 
   renderUserIcon(document.getElementById('player-card-avatar'), user)
@@ -864,6 +848,12 @@ function renderPlayerCard() {
     if (!editor) return
     editor.classList.toggle('hidden')
     if (!editor.classList.contains('hidden')) renderIconEditor()
+  })
+
+  var oshiBtn = document.getElementById('oshi-edit-btn')
+  if (oshiBtn) oshiBtn.addEventListener('click', function () {
+    renderOshiScreen()
+    openPopup('popup-oshi')
   })
 }
 
@@ -991,6 +981,88 @@ window.addEventListener('storage', function (e) {
 })
 
 // ============================================================
+// 推し設定（最推し1人 + 推し最大10人。全サイト共通プロフィールと同期）
+// ============================================================
+var oshiEditState = { ultimateOshi: null, favorites: [] }
+
+function renderOshiScreen() {
+  var body = document.getElementById('oshi-body')
+  if (!body) return
+  var ud = loadUserData() || {}
+  oshiEditState.ultimateOshi = ud.ultimateOshi || null
+  oshiEditState.favorites = Array.isArray(ud.favorites) ? ud.favorites.slice() : []
+
+  var ultCards = Object.keys(TALENTS).map(function (id) {
+    var t = TALENTS[id]
+    return '<button type="button" class="oshi-ult-card' + (id === oshiEditState.ultimateOshi ? ' selected' : '') + '" data-ult="' + id + '">' +
+      '<img src="images/talents/' + id + '.webp" alt="' + t.name + '" loading="lazy">' +
+      '<span>' + t.name + '</span>' +
+      '</button>'
+  }).join('')
+
+  var favCards = Object.keys(TALENTS).map(function (id) {
+    var t = TALENTS[id]
+    return '<button type="button" class="oshi-fav-card' + (oshiEditState.favorites.indexOf(id) >= 0 ? ' selected' : '') + '" data-fav="' + id + '">' +
+      '<img src="images/talents/' + id + '.webp" alt="' + t.name + '" loading="lazy">' +
+      '<span>' + t.name + '</span>' +
+      '</button>'
+  }).join('')
+
+  body.innerHTML =
+    '<div class="oshi-section-title">最推し（1人を選択）</div>' +
+    '<div class="oshi-ult-grid">' + ultCards + '</div>' +
+    '<div class="oshi-section-title">推し（最大10人） <span class="oshi-count" id="oshi-fav-count">' + oshiEditState.favorites.length + ' / 10</span></div>' +
+    '<div class="oshi-fav-grid">' + favCards + '</div>' +
+    '<button type="button" class="oshi-save-btn" id="oshi-save-btn">💾 保存</button>' +
+    '<div class="oshi-msg" id="oshi-msg"></div>'
+
+  body.querySelectorAll('.oshi-ult-card').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      oshiEditState.ultimateOshi = btn.dataset.ult
+      body.querySelectorAll('.oshi-ult-card').forEach(function (b) { b.classList.toggle('selected', b === btn) })
+      playTapSound()
+    })
+  })
+
+  body.querySelectorAll('.oshi-fav-card').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var id = btn.dataset.fav
+      var idx = oshiEditState.favorites.indexOf(id)
+      if (idx >= 0) {
+        oshiEditState.favorites.splice(idx, 1)
+      } else {
+        if (oshiEditState.favorites.length >= 10) {
+          showGameDialog({ icon: '⚠️', title: '選択しすぎ', body: '<p style="margin:8px 0">推しは10人までです。</p>' })
+          return
+        }
+        oshiEditState.favorites.push(id)
+      }
+      btn.classList.toggle('selected', oshiEditState.favorites.indexOf(id) >= 0)
+      var c = document.getElementById('oshi-fav-count')
+      if (c) c.textContent = oshiEditState.favorites.length + ' / 10'
+      playTapSound()
+    })
+  })
+
+  document.getElementById('oshi-save-btn').addEventListener('click', function () {
+    if (!oshiEditState.ultimateOshi) {
+      showGameDialog({ icon: '⚠️', title: '最推し未選択', body: '<p style="margin:8px 0">最推しを1人選んでください。</p>' })
+      return
+    }
+    var ud = loadUserData() || {}
+    ud.ultimateOshi = oshiEditState.ultimateOshi
+    ud.favorites = oshiEditState.favorites.slice()
+    saveUserData(ud)
+    if (isAuthAvailable() && getMilliproUid()) {
+      updateMilliproOshi(oshiEditState.ultimateOshi, oshiEditState.favorites).catch(function () {})
+    }
+    closePopup('popup-oshi')
+    showGameDialog({ icon: '💖', title: '推し設定を保存しました', body: '<p style="margin:8px 0">最推し・推しは全サイトで共有されます。</p>' })
+    playTapSound()
+  })
+}
+
+// ============================================================
 // 事務所（§10: 段階制・応援力で拡張・施設解放）
 // ============================================================
 
@@ -1039,11 +1111,6 @@ function renderOfficeScreen() {
 
   var stageIdx = gd.office.stage - 1
   var stage = OFFICE_STAGES[stageIdx]
-  if (!stage) {
-    // セーブデータ異常時は第1段階として描画（クラッシュ防止）
-    gd.office.stage = 1
-    stage = OFFICE_STAGES[0]
-  }
   var nextStage = OFFICE_STAGES[gd.office.stage]
   var visual = officeBuildingVisual(gd.office.stage)
   var cheer = gd.points.cheer
@@ -1189,7 +1256,7 @@ function renderExternalScreen() {
   var accountHtml
   if (isAuthAvailable()) {
     if (uid) {
-      var email = (firebase.auth().currentUser || {}).email
+      var email = firebase.auth().currentUser.email
       accountHtml =
         '<div class="external-account logged-in">' +
           '<div class="external-account-head">👤 アカウント連携済み</div>' +
@@ -1216,6 +1283,7 @@ function renderExternalScreen() {
               '<button type="button" class="pass-toggle-btn" id="auth-pass-toggle">👁</button>' +
             '</div>' +
             '<button class="external-auth-btn" id="auth-login-btn">ログイン</button>' +
+            '<button type="button" class="password-reset-link" id="auth-forgot-btn">パスワードをお忘れですか？</button>' +
           '</div>' +
           '<div id="auth-panel-signup" class="hidden">' +
             '<input class="external-input" id="auth2-email" type="email" placeholder="メールアドレス" autocomplete="email">' +
@@ -1281,6 +1349,8 @@ function renderExternalScreen() {
       })
     })
   }
+  var forgotBtn = document.getElementById('auth-forgot-btn')
+  if (forgotBtn) forgotBtn.addEventListener('click', openPasswordResetDialog)
   document.getElementById('external-sync-btn').addEventListener('click', function () {
     runExternalSync()
   })
@@ -1435,6 +1505,74 @@ document.getElementById('login-gate-pass-toggle').addEventListener('click', func
 document.getElementById('signup-gate-pass-toggle').addEventListener('click', function () { togglePassVisibility('signup-gate-pass', 'signup-gate-pass-toggle') })
 document.getElementById('signup-gate-pass2-toggle').addEventListener('click', function () { togglePassVisibility('signup-gate-pass2', 'signup-gate-pass2-toggle') })
 
+// ============================================================
+// パスワード再設定（全サイト共通アカウント宛の再設定メール送信）
+// ============================================================
+function openPasswordResetDialog() {
+  var dialog = document.getElementById('password-reset-dialog')
+  if (!dialog) return
+  var email = document.getElementById('login-gate-email')
+  var email2 = document.getElementById('auth-email')
+  var input = document.getElementById('reset-email')
+  if (input) {
+    var hint = ''
+    if (email && email.value.trim()) hint = email.value.trim()
+    else if (email2 && email2.value.trim()) hint = email2.value.trim()
+    input.value = hint
+  }
+  var msg = document.getElementById('reset-msg')
+  if (msg) msg.textContent = ''
+  dialog.classList.remove('hidden')
+  if (input) input.focus()
+}
+
+function closePasswordResetDialog() {
+  var dialog = document.getElementById('password-reset-dialog')
+  if (dialog) dialog.classList.add('hidden')
+}
+
+function resetPasswordError(e) {
+  var j = e && e.code ? e.code : String(e)
+  if (j.indexOf('user-not-found') >= 0) return 'そのメールアドレスは登録されていません'
+  if (j.indexOf('invalid-email') >= 0) return 'メールアドレスの形式が正しくありません'
+  if (j.indexOf('too-many-requests') >= 0) return '試行回数が多すぎます。しばらくしてから再度お試しください'
+  return '送信に失敗しました: ' + j
+}
+
+function submitPasswordReset() {
+  var input = document.getElementById('reset-email')
+  var msg = document.getElementById('reset-msg')
+  var btn = document.getElementById('reset-send-btn')
+  if (!input || !msg) return
+  var email = input.value.trim()
+  if (!email) { msg.textContent = 'メールアドレスを入力してください'; return }
+  if (!isAuthAvailable()) { msg.textContent = 'アカウント連携が設定されていません'; return }
+  if (btn) btn.disabled = true
+  var prev = msg.textContent
+  msg.textContent = '送信中...'
+  milliproResetPassword(email).then(function () {
+    msg.textContent = '再設定メールを送信しました。メールのリンクからパスワードを再設定してください。'
+  }).catch(function (e) {
+    msg.textContent = resetPasswordError(e)
+  }).finally(function () {
+    if (btn) btn.disabled = false
+  })
+}
+
+var resetSendBtn = document.getElementById('reset-send-btn')
+if (resetSendBtn) resetSendBtn.addEventListener('click', submitPasswordReset)
+var resetCloseBtn = document.getElementById('reset-close-btn')
+if (resetCloseBtn) resetCloseBtn.addEventListener('click', closePasswordResetDialog)
+var resetEmailInput = document.getElementById('reset-email')
+if (resetEmailInput) resetEmailInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') submitPasswordReset() })
+var loginGateForgotBtn = document.getElementById('login-gate-forgot-btn')
+if (loginGateForgotBtn) loginGateForgotBtn.addEventListener('click', openPasswordResetDialog)
+document.addEventListener('click', function (e) {
+  var dialog = document.getElementById('password-reset-dialog')
+  if (!dialog || dialog.classList.contains('hidden')) return
+  if (e.target === dialog) closePasswordResetDialog()
+})
+
 // 同期実行（外部報酬を付与して結果を表示）
 function runExternalSync() {
   var resultEl = document.getElementById('external-result')
@@ -1555,7 +1693,7 @@ function renderQuestsScreen() {
         rewardLine('💰 通貨 +' + reward.currency),
         rewardLine('⭐ EXP +' + reward.exp)
       ]
-      if (lv.leveledUp) rewardParts.push(rewardLine('⬆️ レベルアップ！ Lv.' + lv.newLevel, 'levelup'))
+      if (lv.leveledUp) rewardParts.push(rewardLine('⬆️ レベルアップ！ Lv.' + lv.level, 'levelup'))
       showGameDialog({
         icon: '🎁',
         title: '報酬を受け取りました',
@@ -1942,11 +2080,6 @@ document.addEventListener('touchmove', function (e) {
   var dx = t.clientX - itabagDrag.startX
   var dy = t.clientY - itabagDrag.startY
   if (dx * dx + dy * dy < 100) return
-  // 縦方向が主体のスワイプはスクロールとして扱い、ドラッグを中止（preventDefault しない）
-  if (Math.abs(dy) > Math.abs(dx) * 1.5) {
-    itabagDrag = null
-    return
-  }
   e.preventDefault()
   itabagDrag.active = true
   var ghost = document.createElement('div')
@@ -2042,12 +2175,15 @@ function finishItabagGame(lastStars) {
 }
 
 // ポップアップを閉じたらタイマーを止める（痛バッグ制作の進行を破棄）
-// ←戻る・閉じる・背景クリック・タブ切替のどの経路でも openPopup/closePopup 経由で stopItabagGame が呼ばれる
 ;(function () {
   var popup = document.getElementById('popup-itabag')
   if (!popup) return
+  function stopTimer() {
+    if (window._itabagTimer) { clearInterval(window._itabagTimer); window._itabagTimer = null }
+    itabagState = null
+  }
   popup.addEventListener('click', function (e) {
-    if (e.target === popup || e.target.closest('.popup-close-btn')) stopItabagGame()
+    if (e.target === popup || e.target.closest('.popup-close-btn')) stopTimer()
   })
 })()
 
@@ -2080,23 +2216,47 @@ function renderCanvasScreen() {
       (c === canvasState.color ? ' data-active="1"' : '') + '></button>'
   }).join('')
   var sizeBtns = GALLERY_SIZES.map(function (s) {
-    return '<button class="canvas-size" data-size="' + s + '"' + (s === canvasState.size ? ' data-active="1"' : '') + '>' + s + '</button>'
+    return '<button class="canvas-menu-size" data-size="' + s + '"' + (s === canvasState.size ? ' data-active="1"' : '') + '>' +
+      '<span class="canvas-size-dot" style="width:' + s + 'px;height:' + s + 'px"></span>' + s + '</button>'
   }).join('')
 
+  function canvasToolLabel() {
+    return canvasState.tool === 'eraser' ? '🧽 消しゴム' : '✏️ ペン'
+  }
+
   body.innerHTML =
-    '<div class="canvas-toolbar">' +
-      '<button class="canvas-tool' + (canvasState.tool === 'pen' ? ' active' : '') + '" id="canvas-tool-pen">✏️ ペン</button>' +
-      '<button class="canvas-tool' + (canvasState.tool === 'eraser' ? ' active' : '') + '" id="canvas-tool-eraser">🧽 消しゴム</button>' +
-      '<button class="canvas-tool" id="canvas-tool-clear">🗑️ 全部消す</button>' +
+    '<div class="canvas-topbar">' +
+      '<button type="button" class="canvas-menu-btn" id="canvas-menu-btn" aria-label="メニュー">☰</button>' +
+      '<span class="canvas-status" id="canvas-status">' + canvasToolLabel() + '</span>' +
+      '<div class="canvas-top-tools">' +
+        '<button type="button" class="canvas-quick" data-tool="pen">✏️</button>' +
+        '<button type="button" class="canvas-quick" data-tool="eraser">🧽</button>' +
+        '<button type="button" class="canvas-quick canvas-quick-danger" id="canvas-tool-clear">🗑️</button>' +
+      '</div>' +
+      '<div class="canvas-menu hidden" id="canvas-menu">' +
+        '<div class="canvas-menu-group">' +
+          '<div class="canvas-menu-title">ツール</div>' +
+          '<div class="canvas-menu-row">' +
+            '<button type="button" class="canvas-menu-tool" data-tool="pen">✏️ ペン</button>' +
+            '<button type="button" class="canvas-menu-tool" data-tool="eraser">🧽 消しゴム</button>' +
+          '</div>' +
+        '</div>' +
+        '<div class="canvas-menu-group">' +
+          '<div class="canvas-menu-title">太さ</div>' +
+          '<div class="canvas-menu-row">' + sizeBtns + '</div>' +
+        '</div>' +
+        '<div class="canvas-menu-group">' +
+          '<div class="canvas-menu-title">アクション</div>' +
+          '<div class="canvas-menu-row">' +
+            '<button type="button" class="canvas-menu-action" id="canvas-upload-btn">📁 画像を選ぶ</button>' +
+            '<button type="button" class="canvas-menu-action" id="canvas-save-btn">💾 端末に保存</button>' +
+            '<button type="button" class="canvas-menu-action canvas-post-btn" id="canvas-post-btn">🖼️ 投稿</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
     '</div>' +
-    '<div class="canvas-color-row">' + colorSwatches + '</div>' +
-    '<div class="canvas-size-row"><span class="canvas-size-label">太さ:</span>' + sizeBtns + '</div>' +
+    '<div class="canvas-colors">' + colorSwatches + '</div>' +
     '<div class="canvas-wrap"><canvas id="canvas-main" width="512" height="512"></canvas></div>' +
-    '<div class="canvas-actions">' +
-      '<button class="canvas-upload-btn" id="canvas-upload-btn">📁 画像を選ぶ</button>' +
-      '<button class="canvas-save-btn" id="canvas-save-btn">💾 端末に保存</button>' +
-      '<button class="canvas-post-btn" id="canvas-post-btn">🖼️ ギャラリーへ投稿</button>' +
-    '</div>' +
     '<input type="file" id="canvas-file-input" accept="image/*" class="hidden">'
 
   var canvas = document.getElementById('canvas-main')
@@ -2143,48 +2303,80 @@ function renderCanvasScreen() {
   canvas.addEventListener('pointerup', function () { canvasState.drawing = false })
   canvas.addEventListener('pointercancel', function () { canvasState.drawing = false })
 
+  // ---- ツール切替（トップバー + メニュー共通） ----
+  var menuEl = document.getElementById('canvas-menu')
+  var statusEl = document.getElementById('canvas-status')
+
+  function setCanvasTool(tool) {
+    canvasState.tool = tool
+    statusEl.textContent = canvasToolLabel()
+    body.querySelectorAll('[data-tool]').forEach(function (b) {
+      b.classList.toggle('active', b.dataset.tool === tool)
+    })
+  }
+  function closeCanvasMenu() { menuEl.classList.add('hidden') }
+
+  body.querySelectorAll('[data-tool]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      setCanvasTool(btn.dataset.tool)
+      closeCanvasMenu()
+      playTapSound()
+    })
+  })
+  setCanvasTool(canvasState.tool)
+
+  // ---- ハンバーガーメニュー開閉（外側クリックで閉じる） ----
+  document.getElementById('canvas-menu-btn').addEventListener('click', function (e) {
+    e.stopPropagation()
+    menuEl.classList.toggle('hidden')
+    playTapSound()
+  })
+  body.addEventListener('click', function (e) {
+    if (menuEl.classList.contains('hidden')) return
+    if (menuEl.contains(e.target)) return
+    if (e.target.closest && e.target.closest('#canvas-menu-btn')) return
+    closeCanvasMenu()
+  })
+
+  // ---- 色（選ぶとペンに切替） ----
   body.querySelectorAll('.canvas-color').forEach(function (btn) {
     btn.addEventListener('click', function () {
-      canvasState.tool = 'pen'
       canvasState.color = btn.dataset.color
+      setCanvasTool('pen')
       body.querySelectorAll('.canvas-color').forEach(function (b) { b.dataset.active = b === btn ? '1' : '' })
-      body.querySelector('.canvas-tool-pen').classList.add('active')
-      body.querySelector('.canvas-tool-eraser').classList.remove('active')
       playTapSound()
     })
   })
-  body.querySelectorAll('.canvas-size').forEach(function (btn) {
+
+  // ---- 太さ ----
+  body.querySelectorAll('.canvas-menu-size').forEach(function (btn) {
     btn.addEventListener('click', function () {
       canvasState.size = Number(btn.dataset.size)
-      body.querySelectorAll('.canvas-size').forEach(function (b) { b.dataset.active = b === btn ? '1' : '' })
+      body.querySelectorAll('.canvas-menu-size').forEach(function (b) { b.dataset.active = b === btn ? '1' : '' })
       playTapSound()
     })
   })
-  document.getElementById('canvas-tool-pen').addEventListener('click', function () {
-    canvasState.tool = 'pen'
-    this.classList.add('active')
-    document.getElementById('canvas-tool-eraser').classList.remove('active')
-    playTapSound()
-  })
-  document.getElementById('canvas-tool-eraser').addEventListener('click', function () {
-    canvasState.tool = 'eraser'
-    this.classList.add('active')
-    document.getElementById('canvas-tool-pen').classList.remove('active')
-    playTapSound()
-  })
+
+  // ---- 全部消す ----
   document.getElementById('canvas-tool-clear').addEventListener('click', function () {
     ctx.fillStyle = '#ffffff'
     ctx.fillRect(0, 0, 512, 512)
     playTapSound()
   })
+
+  // ---- 端末に保存 ----
   document.getElementById('canvas-save-btn').addEventListener('click', function () {
+    closeCanvasMenu()
     var a = document.createElement('a')
     a.href = canvas.toDataURL('image/png')
     a.download = 'canvas-art.png'
     a.click()
     playTapSound()
   })
+
+  // ---- 画像を選ぶ ----
   document.getElementById('canvas-upload-btn').addEventListener('click', function () {
+    closeCanvasMenu()
     document.getElementById('canvas-file-input').click()
   })
   document.getElementById('canvas-file-input').addEventListener('change', function () {
@@ -2204,6 +2396,8 @@ function renderCanvasScreen() {
     }
     reader.readAsDataURL(file)
   })
+
+  // ---- ギャラリーへ投稿 ----
   document.getElementById('canvas-post-btn').addEventListener('click', function () {
     canvasState.imageData = canvas.toDataURL('image/jpeg', 0.85)
     renderGalleryScreen('upload')
@@ -2577,11 +2771,6 @@ function renderGalleryAllTab() {
 function loadGalleryAll() {
   var body = document.getElementById('gallery-body')
   if (!body) return
-  if (!firebaseAvailable()) {
-    var bodyEl = body.querySelector('.gallery-tab-body')
-    if (bodyEl) bodyEl.innerHTML = '<div class="gallery-empty">Firebase が未設定のためみんなのギャラリーを表示できません。</div>'
-    return
-  }
   syncGallerySales().then(function (result) {
     if (result.count > 0) {
       showGameDialog({
@@ -2593,9 +2782,6 @@ function loadGalleryAll() {
     var pid = getMilliproPlayerId()
     var db = firebase.database()
     db.ref('millipro/gallery').once('value').then(function (snap) {
-      // 読み込み中に別タブへ切り替えていたら反映しない（競合防止）
-      var activeTab = body.querySelector('.gallery-tab.active')
-      if (!activeTab || activeTab.dataset.tab !== 'all') return
       var all = snap.val() || {}
       galleryRemoteList = Object.keys(all).map(function (k) { return all[k] })
         .filter(function (a) { return a && a.mode === 'sale' || (a && a.mode === 'exhibit') })
@@ -2645,11 +2831,6 @@ function loadGalleryAll() {
       bodyEl.querySelectorAll('.gallery-buy-btn').forEach(function (btn) {
         btn.addEventListener('click', function () { galleryBuyArtwork(btn.dataset.artId) })
       })
-    }).catch(function () {
-      var activeTab = body.querySelector('.gallery-tab.active')
-      if (!activeTab || activeTab.dataset.tab !== 'all') return
-      var bodyEl = body.querySelector('.gallery-tab-body')
-      if (bodyEl) bodyEl.innerHTML = '<div class="gallery-empty">ギャラリーを読み込めませんでした。通信環境を確認して再度お試しください。</div>'
     })
   })
 }
@@ -2730,16 +2911,7 @@ function galleryBuyArtwork(artId) {
 
 // 売上を同期して付与する（売上90% + 人気+10/件）
 // 戻り値: Promise<result>（result.available=false なら未設定）
-// 注意: 並行呼び出しは直列化する（read-modify-write 競合で二重付与・消失を防ぐ）
-var gallerySalesQueue = Promise.resolve()
-
 function syncGallerySales() {
-  var run = gallerySalesQueue.then(function () { return runGallerySalesSync() })
-  gallerySalesQueue = run.catch(function () {})
-  return run
-}
-
-function runGallerySalesSync() {
   return new Promise(function (resolve) {
     var result = { available: true, noPlayerId: false, count: 0, currency: 0 }
     if (!firebaseAvailable()) {
