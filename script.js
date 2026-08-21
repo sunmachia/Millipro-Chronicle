@@ -302,20 +302,10 @@ document.getElementById('title-screen').addEventListener('click', () => {
 // ============================================================
 const STORAGE_KEY = 'millipro_userdata'
 
-const TALENTS = {
-  konomi: { name: '甘狼このみ', group: null },
-  nono: { name: '音ノ乃のの', group: null },
-  akubi: { name: 'あくび・でもんすぺーど', group: null },
-  rako: { name: '音ノ瀬らこ', group: 'nova' },
-  yura: { name: 'ゆらぎゆら', group: 'nova' },
-  koma: { name: '小廻こま', group: null },
-  rizu: { name: '雨夜リズ', group: 'uni' },
-  tukuri: { name: '眠雲ツクリ', group: 'uni' },
-  nuhu: { name: '虹深°ぬふ', group: 'nova' },
-  rei: { name: '夕霧レイ', group: 'uni' },
-}
+// 本アプリ側のタレント一覧は共通ソース MILLIPRO_TALENTS（firebase-init.js）を参照
+var TALENTS = MILLIPRO_TALENTS
 
-const GROUP_TALENTS = {
+var GROUP_TALENTS = {
   nova: ['rako', 'yura', 'nuhu'],
   uni: ['rizu', 'tukuri', 'rei'],
   all: Object.keys(TALENTS),

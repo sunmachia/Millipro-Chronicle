@@ -6,19 +6,8 @@
    ・報酬は gameData.js の関数経由で LocalStorage に保存
    ============================================================ */
 
-// ---- タレント定義（script.js と同内容をこのページ用に保持） ----
-var DUNGEON_TALENTS = {
-  konomi: { name: '甘狼このみ' },
-  nono: { name: '音ノ乃のの' },
-  akubi: { name: 'あくび・でもんすぺーど' },
-  rako: { name: '音ノ瀬らこ' },
-  yura: { name: 'ゆらぎゆら' },
-  koma: { name: '小廻こま' },
-  rizu: { name: '雨夜リズ' },
-  tukuri: { name: '眠雲ツクリ' },
-  nuhu: { name: '虹深°ぬふ' },
-  rei: { name: '夕霧レイ' },
-}
+// タレント一覧は共通ソース MILLIPRO_TALENTS（firebase-init.js）を参照
+var DUNGEON_TALENTS = MILLIPRO_TALENTS
 
 // ---- ユーザーデータ読み込み ----
 var USER_KEY = 'millipro_userdata'
@@ -343,7 +332,7 @@ function startBattle() {
   questAddProgress(gd, 'dungeonTries')
   saveGameData(gd)
 
-  var stats = talentBattleStats(gd.level)
+  var stats = talentBattleStats(gd.level, talentId)
 
   state = {
     rank: bossRank,
@@ -383,7 +372,7 @@ function startBattle() {
 function renderBattle() {
   var talent = state.talent
   var boss = state.boss
-  var stats = talentBattleStats(gd.level)
+  var stats = talentBattleStats(gd.level, state.talentId)
   var buff = state.nextAtkMult > 1 ? ' <b style="color:#ffd166">⚡次の攻撃' + state.nextAtkMult + '倍</b>' : ''
 
   var html = '<div class="battle-wrap" id="battle-wrap">'
@@ -520,7 +509,7 @@ function finishTurn() {
 function doCommand(type) {
   if (state.over || VIEW !== 'battle') return
 
-  var stats = talentBattleStats(gd.level)
+  var stats = talentBattleStats(gd.level, state.talentId)
   var dmg
 
   if (type === 'attack') {
@@ -610,7 +599,7 @@ function doGift(id) {
   refreshHeader()
   refreshGiftButtons()
 
-  var stats = talentBattleStats(gd.level)
+  var stats = talentBattleStats(gd.level, state.talentId)
 
   if (id === 'cyalume') {
     state.nextAtkMult = Math.max(state.nextAtkMult, 1.5)

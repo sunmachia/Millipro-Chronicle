@@ -331,13 +331,22 @@ function recordDungeonTry(data) {
   data.dungeon.attempts.push(Date.now())
 }
 
-// 挑戦タレントのステータス（プレイヤーレベル基準）
-function talentBattleStats(level) {
-  return {
+// 挑戦タレントのステータス（プレイヤーレベル基準 + 推し補正）
+// talentId を渡すと、そのタレントの battle 係数（MILLIPRO_TALENTS[talentId].battle）を反映する
+// atk型=+15%atk/-10%def / def型=-10%atk/+20%def / balance=等倍。±15%程度で勝率を壊さない
+function talentBattleStats(level, talentId) {
+  var base = {
     maxHp: 90 + level * 12,
     atk: 12 + level * 2,
     def: 5 + Math.floor(level / 2),
   }
+  if (!talentId || typeof MILLIPRO_TALENTS === 'undefined') return base
+  var entry = MILLIPRO_TALENTS[talentId]
+  var battle = entry && entry.battle
+  if (!battle) return base
+  base.atk = Math.max(1, Math.round(base.atk * (typeof battle.atk === 'number' ? battle.atk : 1)))
+  base.def = Math.max(1, Math.round(base.def * (typeof battle.def === 'number' ? battle.def : 1)))
+  return base
 }
 
 // ボス定義をランクで取得

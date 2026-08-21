@@ -56,18 +56,21 @@ function setMilliproPlayerId(id) {
 // 名前・アイコン・一言は各サイト共通で表示できる（各サイトのローカルに反映）
 // ============================================================
 
-// 全サイト共通のタレントID一覧（最推し/推しの共有に使う。IDは本アプリの TALENTS と同一）
+// 全サイト共通のタレント一覧（単一ソース）。全サイト共通プロフィール(最推し/推し)の他、
+// 本アプリのセットアップ・ダンジョンの「推し選択」・アイコン等でも参照する。
+// battle: 配信ダンジョンでのタイプ別バフ（±15%程度、勝率を壊さない範囲）
+//   atk型=次の一撃重視 / def型=被ダメを抑える / balance=平均
 var MILLIPRO_TALENTS = {
-  konomi: { name: '甘狼このみ' },
-  nono: { name: '音ノ乃のの' },
-  akubi: { name: 'あくび・でもんすぺーど' },
-  rako: { name: '音ノ瀬らこ' },
-  yura: { name: 'ゆらぎゆら' },
-  koma: { name: '小廻こま' },
-  rizu: { name: '雨夜リズ' },
-  tukuri: { name: '眠雲ツクリ' },
-  nuhu: { name: '虹深°ぬふ' },
-  rei: { name: '夕霧レイ' },
+  konomi: { name: '甘狼このみ', group: null, battle: { atk: 1.0,  def: 1.0  } },
+  nono:   { name: '音ノ乃のの',   group: null, battle: { atk: 1.0,  def: 1.0  } },
+  akubi:  { name: 'あくび・でもんすぺーど', group: null, battle: { atk: 1.15, def: 0.9  } },
+  rako:   { name: '音ノ瀬らこ',   group: 'nova', battle: { atk: 1.15, def: 0.9  } },
+  yura:   { name: 'ゆらぎゆら',   group: 'nova', battle: { atk: 0.9,  def: 1.2  } },
+  koma:   { name: '小廻こま',     group: null, battle: { atk: 0.9,  def: 1.2  } },
+  rizu:   { name: '雨夜リズ',     group: 'uni',  battle: { atk: 1.15, def: 0.9  } },
+  tukuri: { name: '眠雲ツクリ',   group: 'uni',  battle: { atk: 0.9,  def: 1.2  } },
+  nuhu:   { name: '虹深°ぬふ',    group: 'nova', battle: { atk: 1.0,  def: 1.0  } },
+  rei:    { name: '夕霧レイ',     group: 'uni',  battle: { atk: 1.15, def: 0.9  } },
 }
 
 // 最推し/推しをローカル（millipro_userdata）から取得
